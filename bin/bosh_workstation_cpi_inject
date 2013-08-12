@@ -1,0 +1,123 @@
+#!/usr/bin/env ruby
+
+require "logger"
+require "net/ssh"
+require "net/scp"
+
+module BoshWorkstationCpiInjector
+  class Gem
+    attr_reader :gem_dir, :spec_path, :name, :version
+
+    def self.from_gem_dir(gem_dir)
+      name = File.basename(gem_dir)
+      spec_path = "#{gem_dir}/#{name}.gemspec"
+
+      if spec = ::Gem::Specification.load(spec_path)
+        new(gem_dir, spec_path, spec.name, spec.version)
+      elsif spec = ::Gem::Specification.find_by_name("bosh_workstation_cpi")
+        new(spec.gem_dir, spec.spec_file, spec.name, spec.version)
+      else
+        raise "Failed to find gem specification"
+      end
+    end
+
+    def self.on_director(name, version)
+      gem_home  = "/var/vcap/packages/director/gem_home"
+      gem_dir   = "#{gem_home}/gems/#{name}-#{version}"
+      spec_path = "#{gem_home}/specifications/#{name}-#{version}.gemspec"
+      new(gem_dir, spec_path, name, version)
+    end
+
+    def initialize(gem_dir, spec_path, name, version)
+      @gem_dir = gem_dir
+      @spec_path = spec_path
+      @name = name
+      @version = version
+    end
+
+    def tmp_gem_dir;   "/tmp/#{@name}-#{@version}";         end
+    def tmp_spec_path; "/tmp/#{@name}-#{@version}.gemspec"; end
+  end
+
+  class Injector
+    def initialize(host, user, password, logger=Logger.new(STDERR))
+      @host = host
+      @user = user
+      @password = password
+      @sudo = "echo '#{password}' | sudo -S"
+      @logger = logger
+    end
+
+    def inject(local_gem, director_gem)
+      start_ssh
+      upload_gem(local_gem, director_gem)
+      upload_gem_spec(local_gem, director_gem)
+      install_gem(director_gem)
+      install_gem_spec(director_gem)
+      cleanup_gem(director_gem)
+      cleanup_gem_spec(director_gem)
+    ensure
+      close_ssh
+    end
+
+    private
+
+    def start_ssh
+      @logger.info("Connecting to '#{@user}@#{@host}'")
+      @ssh = Net::SSH.start(@host, @user, password: @password, paranoid: false)
+    end
+
+    def upload_gem(local_gem, director_gem)
+      @logger.info("Uploading gem " + 
+        "'#{local_gem.gem_dir}' to '#{director_gem.tmp_gem_dir}'")
+      @ssh.exec!("rm -rf '#{director_gem.tmp_gem_dir}'")
+      @ssh.scp.upload!(local_gem.gem_dir, director_gem.tmp_gem_dir, recursive: true)
+    end
+
+    def upload_gem_spec(local_gem, director_gem)
+      @logger.info("Uploading gem specification " + 
+        "'#{local_gem.spec_path}' to '#{director_gem.tmp_spec_path}'")
+      @ssh.exec!("rm -f '#{director_gem.tmp_spec_path}'")
+      @ssh.scp.upload!(local_gem.spec_path, director_gem.tmp_spec_path)
+    end
+
+    def install_gem(director_gem)
+      @logger.info("Copying gem " + 
+        "'#{director_gem.tmp_gem_dir}' into '#{director_gem.gem_dir}'")
+      @ssh.exec!("#{@sudo} rm -rf '#{director_gem.gem_dir}'")
+      @ssh.exec!("#{@sudo} cp -R '#{director_gem.tmp_gem_dir}' '#{director_gem.gem_dir}'")
+    end
+
+    def install_gem_spec(director_gem)
+      @logger.info("Copying gem specification " + 
+        "'#{director_gem.tmp_spec_path}' to '#{director_gem.spec_path}'")
+      @ssh.exec!("#{@sudo} rm -f '#{director_gem.spec_path}'")
+      @ssh.exec!("#{@sudo} cp '#{director_gem.tmp_spec_path}' '#{director_gem.spec_path}'")
+    end
+
+    def cleanup_gem(director_gem)
+      @logger.info("Deleting gem '#{director_gem.tmp_gem_dir}'")
+      @ssh.exec!("rm -rf '#{director_gem.tmp_gem_dir}'")
+    end
+
+    def cleanup_gem_spec(director_gem)
+      @logger.info("Deleting gem specification '#{director_gem.tmp_spec_path}'")
+      @ssh.exec!("rm -f '#{director_gem.tmp_spec_path}'")
+    end
+
+    def close_ssh
+      @logger.info("Closing connection")
+      @ssh.close if @ssh
+    end
+  end
+end
+
+if ARGV.size == 3
+  i = BoshWorkstationCpiInjector
+  local_gem    = i::Gem.from_gem_dir(File.expand_path("#{__FILE__}/../.."))
+  director_gem = i::Gem.on_director(local_gem.name, local_gem.version)
+  injector     = i::Injector.new(*ARGV)
+  injector.inject(local_gem, director_gem)
+else
+  raise "Usage: <vm-ip> <vm-user> <vm-password>"
+end

@@ -1,0 +1,77 @@
+---
+name: cf
+director_uuid: a6799da0-77c4-48ce-a13d-b8c52ae779f6
+
+releases:
+- name: cf
+  version: latest
+
+networks:
+- name: default
+  subnets:
+  - range: 192.168.56.0/24
+    gateway: 192.168.56.1
+    dns:
+    - 192.168.56.1
+    static:
+    - 192.168.56.3
+    - 192.168.56.4
+    - 192.168.56.5
+    - 192.168.56.6
+    - 192.168.56.7
+    - 192.168.56.8
+    - 192.168.56.9
+    - 192.168.56.10
+    - 192.168.56.11
+    - 192.168.56.12
+    reserved:
+    - 192.168.56.2 # microbosh
+    - 192.168.56.50-192.168.56.254
+    cloud_properties:
+      name: vboxnet0
+
+resource_pools:
+- name: nats
+  stemcell:
+    name: bosh-stemcell
+    version: 750
+  network: default
+  size: 1
+  cloud_properties:
+    ram: 1024
+    disk: 2048
+    cpu: 1
+
+compilation:
+  workers: 1
+  network: default
+  cloud_properties:
+    ram: 1024
+    disk: 4096
+    cpu: 2
+
+update:
+  canaries: 1
+  canary_watch_time: 60000
+  update_watch_time: 60000
+  max_in_flight: 1
+  max_errors: 2
+
+jobs:
+- name: nats
+  template: nats
+  instances: 1
+  resource_pool: nats
+  persistent_disk: 0
+  networks:
+  - name: default
+    static_ips:
+    - 192.168.56.3
+  properties:
+    networks:
+      apps: default
+    nats:
+      user: nats
+      password: nats
+      address: "0.0.0.0"
+      port: 4222

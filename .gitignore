@@ -1,0 +1,5 @@
+.idea
+
+# Generated when `bosh micro deploy ...` runs
+dev/deployments/micro/bosh_micro_deploy.log
+dev/deployments/bosh-deployments.yml

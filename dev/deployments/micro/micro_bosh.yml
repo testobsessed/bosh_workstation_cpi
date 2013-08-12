@@ -1,0 +1,70 @@
+---
+name: bosh_micro01
+
+network:
+  ip: 192.168.56.2
+  netmask: 255.255.255.0
+  gateway: 192.168.56.1
+  dns:
+  - 192.168.56.1
+
+  # Host-only network that was configured via VirtualBox
+  cloud_properties:
+    name: vboxnet0
+
+env:
+  bosh:
+    password:
+
+resources:
+  persistent_disk: 20480
+  cloud_properties:
+    ram: 3072
+    disk: 16384
+    cpu: 4
+
+cloud:
+  # Set MicroBOSH deployer plugin to 'workstation'.
+  # (Even though we are deploying vSphere stemcell!)
+  plugin: workstation
+
+  properties:
+    agent:
+      ntp: ["us.pool.ntp.org"]
+      mbus:
+      blobstore:
+        provider: local
+        options:
+          blobstore_path: /var/vcap/micro_bosh/data/cache
+
+    # IP of a machine (this machine) that is running VirtualBox.
+    # CPI will log in using provided user/password to run
+    # VBoxManage command to issue VirtualBox commands.
+    vcenters:
+    - host: 192.168.56.1
+      user: work
+      password: work
+
+      datacenters:
+      - name: xxx
+
+        # Location on the machine specified above.
+        # It will be used to store stemcells/artifacts 
+        # produced by BOSH. It must be readable/writable 
+        # by user provided above.
+        datastore_pattern: /Users/work/bosh_workstation_cpi
+        persistent_datastore_pattern: xxx
+
+        clusters:
+        - xxx
+
+logging:
+  level: INFO
+
+dir:
+
+apply_spec:
+  properties: {}
+  agent:
+    blobstore: {}
+    nats: {}

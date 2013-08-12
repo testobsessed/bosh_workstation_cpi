@@ -1,0 +1,16 @@
+module BoshWorkstationCpi::Actions
+  class HasVm
+    # @param [String] vm vm id that was once returned by {#create_vm}
+    def initialize(vm_manager, vm_id, logger=Logger.new(STDERR))
+      @vm_manager = vm_manager
+      @vm_id = vm_id
+      @logger = logger
+    end
+
+    # @return [Boolean] True if the vm exists
+    def run
+      @logger.info("Checking vm")
+      @vm_manager.driver.vm_finder.find(@vm_id, raise: false)
+    end
+  end
+end

@@ -1,0 +1,69 @@
+#!/usr/bin/env ruby
+
+require "logger"
+require "net/ssh"
+
+module BoshWorkstationCpiSwitcher
+  class Switcher
+    def initialize(host, user, password, logger=Logger.new(STDERR))
+      @host = host
+      @user = user
+      @password = password
+      @sudo = "echo '#{password}' | sudo -S"
+      @logger = logger
+    end
+
+    def switch(old_cpi, new_cpi)
+      start_ssh
+      update_director_configs(old_cpi, new_cpi)
+      check_director_updates(old_cpi)
+      restart_director
+    ensure
+      close_ssh
+    end
+
+    private
+
+    def start_ssh
+      @logger.info("Connecting to '#{@user}@#{@host}'")
+      @ssh = Net::SSH.start(@host, @user, password: @password, paranoid: false)
+    end
+
+    DIRECTOR_JOB_CONFIG_DIR = "/var/vcap/jobs/director/config"
+
+    def update_director_configs(old_cpi, new_cpi)
+      @logger.info("Updating director configs")
+      # Changing .yml files is not enough since it looks like
+      # files are quickly changed back to original form unless .yml.erb is changed.
+      find_cmd = "find '#{DIRECTOR_JOB_CONFIG_DIR}' -type f"
+      sed_cmd  = "sed -i 's/plugin: #{old_cpi}/plugin: #{new_cpi}/g'" 
+      @ssh.exec!("#{@sudo} #{find_cmd} -exec #{sed_cmd} {} \\;")
+    end
+
+    def check_director_updates(old_cpi)
+      # SSH exec! returns nil when no output is generated; hence, output.to_s
+      output = @ssh.exec!("#{@sudo} grep -R '#{old_cpi}' '#{DIRECTOR_JOB_CONFIG_DIR}'")
+      raise "Failed to remove references to '#{old_cpi}'" \
+        if output.to_s.include?(old_cpi)
+    end
+
+    def restart_director
+      @logger.info("Restarting director")
+      # Monit specifies processes that depend on director
+      # so once director is restarted workers will also be restarted.
+      @ssh.exec!("#{@sudo} /var/vcap/bosh/bin/monit restart director")
+    end
+
+    def close_ssh
+      @logger.info("Closing connection")
+      @ssh.close if @ssh
+    end
+  end
+end
+
+if ARGV.size == 3
+  switcher = BoshWorkstationCpiSwitcher::Switcher.new(*ARGV)
+  switcher.switch("vsphere", "workstation")
+else
+  raise "Usage: <vm-ip> <vm-user> <vm-password>"
+end
