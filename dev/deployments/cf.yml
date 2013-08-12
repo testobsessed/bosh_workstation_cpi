@@ -1,0 +1,487 @@
+---
+name: cf
+director_uuid: 0ec0a2c4-16fd-45e3-a26b-67a79dd368fb
+
+releases:
+- name: cf
+  version: latest
+
+networks:
+- name: default
+  subnets:
+  - range: 192.168.56.0/24
+    gateway: 192.168.56.1
+    dns:
+    - 192.168.56.1
+    static:
+    - 192.168.56.3
+    - 192.168.56.4
+    - 192.168.56.5
+    - 192.168.56.6
+    - 192.168.56.7
+    - 192.168.56.8
+    - 192.168.56.9
+    - 192.168.56.10
+    - 192.168.56.11
+    reserved:
+    - 192.168.56.2 # microbosh
+    - 192.168.56.50-192.168.56.254
+    cloud_properties:
+      name: vboxnet0
+
+resource_pools:
+- name: common
+  stemcell:
+    name: bosh-stemcell
+    version: 750
+  network: default
+  size: 7
+  cloud_properties:
+    ram: 1024
+    disk: 512
+    cpu: 1
+
+# Both uaa and saml_login jobs needed more ephemeral disk space
+# (Failed to unpack blob: ["/var/vcap/bosh/lib/ruby/gems/1.9.1/gems/bosh_agent-1.5.0.pre.750/lib/bosh_agent/util.rb:50:in...])
+- name: larger
+  stemcell:
+    name: bosh-stemcell
+    version: 750
+  network: default
+  size: 2
+  cloud_properties:
+    ram: 1024
+    disk: 2048
+    cpu: 1
+
+# dea job needed more ephemeral disk space
+- name: dea
+  stemcell:
+    name: bosh-stemcell
+    version: 750
+  network: default
+  size: 1
+  cloud_properties:
+    ram: 1024
+    disk: 4096
+    cpu: 1
+
+compilation:
+  workers: 1
+  network: default
+  reuse_compilation_vms: true
+  cloud_properties:
+    ram: 1024
+    disk: 4096
+    cpu: 2
+
+update:
+  canaries: 1
+  canary_watch_time: 60000
+  update_watch_time: 60000
+  max_in_flight: 1
+  max_errors: 2
+
+jobs:
+- name: nats
+  template: nats
+  instances: 1
+  resource_pool: common
+  persistent_disk: 0
+  networks:
+  - name: default
+    static_ips:
+    - 192.168.56.3
+  properties:
+    networks:
+      apps: default
+    nats:
+      user: nats
+      password: nats-password
+      address: 192.168.56.3
+      port: 4222
+
+- name: health_manager
+  template: health_manager_next
+  instances: 1
+  resource_pool: common
+  persistent_disk: 0
+  networks:
+  - name: default
+    static_ips:
+    - 192.168.56.4
+  properties:
+    cc:
+      srv_api_uri: http://api.192.168.56.8.xip.io
+    networks:
+      apps: default
+    nats:
+      user: nats
+      password: nats-password
+      address: 192.168.56.3
+      port: 4222
+    health_manager:
+      intervals:
+        giveup_crash_number: 4
+
+- name: nfs_server
+  template: debian_nfs_server
+  instances: 1
+  resource_pool: common
+  persistent_disk: 512
+  networks:
+  - name: default
+    static_ips:
+    - 192.168.56.5
+  properties:
+    nfs_server:
+      address: 192.168.56.5
+      network: 192.168.56.0/24
+
+- name: ccdb
+  template: postgres
+  instances: 1
+  resource_pool: common
+  persistent_disk: 512
+  networks:
+  - name: default
+    static_ips:
+    - 192.168.56.6
+  properties:
+    db: ccdb
+    ccdb:
+      address: 192.168.56.6
+      port: 2544
+      db_scheme: postgres
+      roles:
+      - tag: admin
+        name: admin
+        password: ccdb-password
+      databases:
+      - tag: cc
+        name: ccdb
+        citext: true
+
+- name: cloud_controller
+  template: cloud_controller_ng
+  instances: 1
+  resource_pool: common
+  persistent_disk: 0
+  networks:
+  - name: default
+    static_ips:
+    - 192.168.56.7
+  properties:
+    domain: 192.168.56.8.xip.io
+    system_domain: 192.168.56.8.xip.io
+    system_domain_organization: system
+    app_domains:
+    - 192.168.56.8.xip.io
+    syslog_aggregator:
+      # Bug in iptables.conf.erb: requires address to be present
+      # (Error filling in template `iptables.conf.erb' for `cloud_controller/0' (line 3: undefined method `address' for "vcap.cloud_controller_ng":String))
+      address: 192.168.56.10
+    ccng:
+      external_host: api
+      logging_level: debug
+      uaa_resource_id: cloud_controller
+      staging_upload_user: staging_upload_user
+      staging_upload_password: 92b4cc675a73648d266e
+      bulk_api_password: ed42bad462ae8cbed068
+      db_encryption_key: ec8514fce2f36be13474
+      bootstrap_admin_email: admin
+      cc_partition: default
+      stacks:
+      - name: lucid64
+        description: Ubuntu 10.04
+    ccdb_ng:
+      address: 192.168.56.6
+      port: 2544
+      db_scheme: postgres
+      roles:
+      - tag: admin
+        name: admin
+        password: ccdb-password
+      databases:
+      - tag: cc
+        name: ccdb
+        citext: true
+    networks:
+      apps: default
+    nfs_server:
+      address: 192.168.56.5
+    uaa:
+      url: http://uaa.192.168.56.8.xip.io
+      jwt:
+        verification_key: ! '-----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo7iwMcUTeOwWaMO3vLAY
+          gKaY0zjjOVJXCtx6R8h2w04CXjJrtgl/gfEIhZj/p1TIbI7A7TGxQTD6Nary2o5o
+          XWSaOFnJc2yX3r2z6rRCutGm5s5+zvQKUAFtqAQye1JV70BK+89z+zJu0dT+5cXT
+          NJ0qwQKzSYhEwbmY7ECTcASfs02ymb4kRjcWhwHw092DedqRuoA8eaudDhSOBVzE
+          BROUz20UXgeiq3i46F+2vocWQ1iAV2o7groTIwydEUCV7J2R5/fZScsP3HHLwAgp
+          ZHJBW+v98vpbxjduDGfK1xg2YBY7JRM+BN8v7R0VXj/1QnXxTtKtIveiRo75jBYG
+          HwIDAQAB
+          -----END PUBLIC KEY-----
+'
+    login:
+      url: http://login.192.168.56.8.xip.io
+    nats:
+      user: nats
+      password: nats-password
+      address: 192.168.56.3
+      port: 4222
+
+- name: router
+  template: gorouter
+  instances: 1
+  resource_pool: common
+  persistent_disk: 0
+  networks:
+  - name: default
+    static_ips:
+    - 192.168.56.8
+  properties:
+    router:
+      status:
+        port: 8080
+        user: router_status
+        password: router-status-password
+    nats:
+      user: nats
+      password: nats-password
+      address: 192.168.56.3
+      port: 4222
+
+- name: uaadb
+  template: postgres
+  instances: 1
+  resource_pool: common
+  persistent_disk: 512
+  networks:
+  - name: default
+    static_ips:
+    - 192.168.56.9
+  properties:
+    db: uaadb
+    uaadb:
+      address: 192.168.56.9
+      port: 2544
+      db_scheme: postgresql
+      roles:
+      - tag: admin
+        name: root
+        password: uaadb-password
+      databases:
+      - tag: uaa
+        name: uaa
+    networks:
+      services: default
+
+- name: uaa
+  template: uaa
+  instances: 1
+  resource_pool: larger
+  persistent_disk: 0
+  networks:
+  - name: default
+    static_ips:
+    - 192.168.56.10
+  properties:
+    uaa:
+      catalina_opts: -Xmx768m -XX:MaxPermSize=256m
+      url: http://uaa.192.168.56.8.xip.io
+      jwt:
+        signing_key: ! '-----BEGIN RSA PRIVATE KEY-----
+          MIIEpAIBAAKCAQEAo7iwMcUTeOwWaMO3vLAYgKaY0zjjOVJXCtx6R8h2w04CXjJr
+          tgl/gfEIhZj/p1TIbI7A7TGxQTD6Nary2o5oXWSaOFnJc2yX3r2z6rRCutGm5s5+
+          zvQKUAFtqAQye1JV70BK+89z+zJu0dT+5cXTNJ0qwQKzSYhEwbmY7ECTcASfs02y
+          mb4kRjcWhwHw092DedqRuoA8eaudDhSOBVzEBROUz20UXgeiq3i46F+2vocWQ1iA
+          V2o7groTIwydEUCV7J2R5/fZScsP3HHLwAgpZHJBW+v98vpbxjduDGfK1xg2YBY7
+          JRM+BN8v7R0VXj/1QnXxTtKtIveiRo75jBYGHwIDAQABAoIBAQCjiLlGHWpj4L5J
+          iyWebe8roj0Izsv418xl5vClfxFR6DvpR0fbnwUkEFTIzZif1coU1UrUIkzBp2Bl
+          9wl5UcHhd7msC9NzXccdEDQEfmYhIYUrCpwTsCQU4jhcGUUrdYSs5HWBrShWg3u6
+          UJ0DemSLK2onPMFE875qGy8q3R3oRr0NikYADi1HFifoX170Dysf/ILPNoteRQF2
+          +S20mtX23AumzEUWyFwRY6Tn6VdQCtAtMFNP99yqB7npXj09LKlv/ZmwLaoijn0x
+          g9Mhaf5iErLq1vMGDZrfgRLPJ/ElS3XPz2bZkiwMrxhKu6Itr3IS69Df9Hk77SnZ
+          2+Cb/MrRAoGBAM/Kns+9pwdG67iu7mBZWe1+mDgKSZUZt5MVdDPOKjaZmUkrRVpt
+          YsvYQKZWzFwhHuBF5jLYw2tHKgqAvAXlXFsTN6/FnR7M4VvialfoDeZpjZY+DC/+
+          4EpiS6QLyZucURerMJzH4AOwVV5J3bCdqnHXNUQ3hySg45FC0LagKuebAoGBAMm0
+          nIIBw9OWz7scghEYQxAlauadOc+0zDC32PvoJymO6oeSor2cpxyhpggO+1t0RDFc
+          GynOCpZw9xR6pPj0vmNMcBlojarmL4JnsiKJPGBLTNQ8OLXKHU1mKH08MqfYaBQg
+          kYdllqFxfQr3/fbthODZ5MS6W1Hh410ouzmTWh3NAoGBALl4cRKahLkhG4woUEud
+          1X//7FyxCgbVAp99mdAX6GP96+18exYA5xtuNh6DATwGsCmdGqEuDBf4WFUxnSJi
+          HHKKj70L1XfFhi3exe8bCTUt6Bw/298HUCn03PFbOCP2fgdzXRvD6HdCcKCNrBxW
+          Tun4Hup56d3O4fEpw2QPSNybAoGAJtKShRtd263dUcBM8Ilg7wykpLqCVA4SdxYL
+          t4CZeRA+59U7aY9rQsGCOW7YxmN8dJurxsIXm5kmlVR9yEUjF+2wbdOH4OrpHgpj
+          aO5NJqOXqAnnSGYcebc998zMWy316lnSaOMOuQgk7yWIRiy1NKn7tDnCNeJqZpXe
+          Y1iPMckCgYA2fmMBZp/4+lL2S8wo6pADOSXRyQ8qIYCzT4v7Z1G9iPr+hhHDiRgr
+          bPQmj3SX4XPJrvdGyM/8+x5RvMo/T7nOnvu27bVx1EkfoQgWb+t9axvjYtzeCg2Z
+          fHUqFibKekjcLlmrikmd/1h7b562GWKmNo2qJyt6+jPRBy4PEyVRzQ==
+          -----END RSA PRIVATE KEY-----
+
+'
+        verification_key: ! '-----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo7iwMcUTeOwWaMO3vLAY
+          gKaY0zjjOVJXCtx6R8h2w04CXjJrtgl/gfEIhZj/p1TIbI7A7TGxQTD6Nary2o5o
+          XWSaOFnJc2yX3r2z6rRCutGm5s5+zvQKUAFtqAQye1JV70BK+89z+zJu0dT+5cXT
+          NJ0qwQKzSYhEwbmY7ECTcASfs02ymb4kRjcWhwHw092DedqRuoA8eaudDhSOBVzE
+          BROUz20UXgeiq3i46F+2vocWQ1iAV2o7groTIwydEUCV7J2R5/fZScsP3HHLwAgp
+          ZHJBW+v98vpbxjduDGfK1xg2YBY7JRM+BN8v7R0VXj/1QnXxTtKtIveiRo75jBYG
+          HwIDAQAB
+          -----END PUBLIC KEY-----
+'
+      cc:
+        client_secret: d831127235b7169b9a35
+      admin:
+        client_secret: 8ebe24f67d9522ea663f
+      clients:
+        login:
+          id: login
+          override: true
+          autoapprove: true
+          authorities: oauth.login
+          authorized-grant-types: authorization_code,client_credentials,refresh_token
+          scope: openid
+          secret: login-client-secret
+        cf:
+          id: cf
+          override: true
+          autoapprove: true
+          authorities: uaa.none
+          authorized-grant-types: implicit,password,refresh_token
+          scope: cloud_controller.read,cloud_controller.write,openid,password.write,cloud_controller.admin,scim.read,scim.write
+      scim:
+        user:
+          override: false
+        users:
+        - admin|admin|scim.write,scim.read,openid,cloud_controller.admin,dashboard.user
+    ccdb:
+      address: 192.168.56.6
+      port: 2544
+      db_scheme: postgres
+      roles:
+      - tag: admin
+        name: admin
+        password: ccdb-password
+      databases:
+      - tag: cc
+        name: ccdb
+        citext: true
+    domain: 192.168.56.8.xip.io
+    db: uaadb
+    uaadb:
+      address: 192.168.56.9
+      port: 2544
+      db_scheme: postgresql
+      roles:
+      - tag: admin
+        name: root
+        password: uaadb-password
+      databases:
+      - tag: uaa
+        name: uaa
+    networks:
+      apps: default
+    nats:
+      user: nats
+      password: nats-password
+      address: 192.168.56.3
+      port: 4222
+
+- name: saml_login
+  template: saml_login
+  instances: 1
+  resource_pool: larger
+  persistent_disk: 0
+  networks:
+  - name: default
+    static_ips:
+    - 192.168.56.11
+  properties:
+    domain: 192.168.56.8.xip.io
+    saml_login:
+      uaa_base: http://uaa.192.168.56.8.xip.io
+      serviceProviderKey: ! '-----BEGIN RSA PRIVATE KEY-----
+        MIIEpQIBAAKCAQEA1zRavRzimI2cBRHDeSWdIwRd3PelcMQ5BlAn9HxFgtnUzzIj
+        7Kdu8yk9I1Qa/NsxWDQN1IUViHY7ODkOgX+2q5Zdq4ZbWKtr+RMAn+caBpbabdfw
+        aCZpv2RQlnQtGLmejN/ElL8F2cIl2u6nWkX2hc6QLnKucii3xCEdA1HIkEXg+e/G
+        wn6nliuKtwmgsqHwLFRAkpCxIf2dPiDaIP8s2r9mKxmFi/gMbSl5/vOFYLUyVLfz
+        cRl5LL3pt1LkzsM1LF20+Iu8daYqwZS9DOxVerUi9bgjuZVPGu4l8q0vip64tlNx
+        QPZYpS390SqOhtWs/GB9q/PVOdDQGObLvhdXhwIDAQABAoIBAQCMdsejF+9u0z86
+        r9V+hWaDLJ53U8zQRcNSs47grRxRxAx7EKcSGFb6r7gQDx1uXUNf5toAFL1xTHpq
+        wBMPw2Rfqs2I3zFQNtNKx3Ro6la6Zkw71e48jJYJLljLWxj0QnOST5vn2qbe8zHy
+        LENfULsPqzvAlWn3aUxI37QoLoFSaJZnAFlgVMb4VQwSoyLgzH7OsdVAXx08QQFs
+        N09/KO9XwWUIxTf4u/J8EEqRoFTw8/I26hFXe25cCfQebCkEcc2brs4JIX4MjTCk
+        ioGmTlLNoNI/I6aQk3AKxiZK/SrJyx7AL6/xBeE2f4+zqWrPmB1K4WxmAf+YGnYn
+        csVdy3JBAoGBAP9wOWUTRvIiYUKOq5/85kpznLZN3lPE2EQfryqmpBSmUZ8hX5Wo
+        XgYh5yU+djcMk5oiFvrRL8sUAkPbHMcuR4vABj5OJ298MwdbUfBZGV5a8Fx8uKXA
+        TFxlf0/Wf9mnPK6zIp2tTMXVb0bCYApLZdWSzkQSDccGtjBqUa7ab2XNAoGBANet
+        e/gQIeGESKbQIlCLs1GtgoQsu2FFBrh1k491CfOTE+5VElytt1qnW8MY/00sATXj
+        dkNaFEGDl+HxqKRBGDVV9N+1dEvuzTZZOC6CzEGAdYoA+2+uWFAgyOMgOdhDrUBJ
+        Gdg3drbighz4I28QeTI3vRRbJB5q3meO7haEqZ6jAoGBAKRwzKIjDNMoCtDcI+R0
+        3JQlZUd/TZdD662/b/bXHF4my/jTdUNVBmKQRMuXMGcz83mQZJbHQCtOED86uYYI
+        ZwqybdKCYaTFodwkj9VYppo1lPMVX5FlAEOjG5h8EAZAQTJ+I9S6EehyBJba3xUB
+        gOdDAQKVVMVBrtvwNfGIsZopAoGABjkgQZkdkSdC/WU2CELvqqSqBmxP/8+BESN7
+        XYFQBzIwOglEXV450yjPEgMPosdpRYfJqsnXmchVQpS5e/vQ2gEf7rCKqYI7c50B
+        bP4jLKSrP48lsiRCshUwFrWgVagmQJubXkzDZSWGAZX7V8IO7S8EiqjSkvocbrqG
+        DipHxqcCgYEAiAGJpC/k9KYGVo/LujCfuTBw4KdAMLBE33d56l7+a9Gfx59B9e0S
+        qnT7iyUjrKa61/D9PevHb77ZlNJz/tXyzGPuVZVFs+Ag/w4wiXkCDCTgVeeIbSDj
+        4YuJ7Ty7ktsVDTPONFV0wrXgndtszxzNBEKt26U4oezzandT3FFWpJc=
+        -----END RSA PRIVATE KEY-----
+'
+      serviceProviderCertificate: ! '-----BEGIN CERTIFICATE-----
+        MIIDDTCCAfWgAwIBAgIBADANBgkqhkiG9w0BAQUFADBKMQswCQYDVQQGEwJVUzEQ
+        MA4GA1UECgwHUGl2b3RhbDEpMCcGA1UEAwwgc2VydmljZV9wcm92aWRlcl9rZXlf
+        Y3JlZGVudGlhbHMwHhcNMTMwODA3MDEzNjE3WhcNMTUwODA3MDEzNjE3WjBKMQsw
+        CQYDVQQGEwJVUzEQMA4GA1UECgwHUGl2b3RhbDEpMCcGA1UEAwwgc2VydmljZV9w
+        cm92aWRlcl9rZXlfY3JlZGVudGlhbHMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw
+        ggEKAoIBAQDXNFq9HOKYjZwFEcN5JZ0jBF3c96VwxDkGUCf0fEWC2dTPMiPsp27z
+        KT0jVBr82zFYNA3UhRWIdjs4OQ6Bf7arll2rhltYq2v5EwCf5xoGltpt1/BoJmm/
+        ZFCWdC0YuZ6M38SUvwXZwiXa7qdaRfaFzpAucq5yKLfEIR0DUciQReD578bCfqeW
+        K4q3CaCyofAsVECSkLEh/Z0+INog/yzav2YrGYWL+AxtKXn+84VgtTJUt/NxGXks
+        vem3UuTOwzUsXbT4i7x1pirBlL0M7FV6tSL1uCO5lU8a7iXyrS+Knri2U3FA9lil
+        Lf3RKo6G1az8YH2r89U50NAY5su+F1eHAgMBAAEwDQYJKoZIhvcNAQEFBQADggEB
+        ADOQseRTdD1mozxlobydNa6rN4yarRxN9CWotPGQgdB8ZJp+FDcre9fhVPl//L7A
+        CceQ4vdzHdQCTED7IABcWFfp8XEa5M4t2OTHyqhRRxdBjsLAF8S53m8edzGq4pxG
+        91kkojTuj5xUZm6usztPx7H4Cu5p3f1FBUp7PzXPcoS+aZfuEBgZy0Ets/+MupN7
+        6OUVsK2gB8q8rSQVnHKuGIElFiDO1qiJlGCtK4pGswaqn92WHKlImFHmnqV5lsAN
+        A9HaGMaiKUs8RXvopD1OTAzcH1t5pFGiDEfZ6z+gFpzdHl5W8hlK3iHYBC+CY1ew
+        nQFfJ2uamv+xeGh7QYeJdFw=
+        -----END CERTIFICATE-----
+'
+      idp_entity_alias: sso-sp
+      idp_metadata_url: ! ''''''
+    uaa:
+      clients:
+        login:
+          secret: login-client-secret
+    networks:
+      apps: default
+    nats:
+      user: nats
+      password: nats-password
+      address: 192.168.56.3
+      port: 4222
+
+- name: dea
+  template: dea_next
+  instances: 1
+  resource_pool: dea
+  persistent_disk: 0
+  networks:
+  - name: default
+  properties:
+    domain: 192.168.56.8.xip.io
+    dea_next:
+      memory_mb: 2048
+      memory_overcommit_factor: 1
+      disk_mb: 2048
+      disk_overcommit_factor: 1
+      num_instances: 10
+      stacks:
+      - lucid64
+    nats:
+      user: nats
+      password: nats-password
+      address: 192.168.56.3
+      port: 4222

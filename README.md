@@ -58,10 +58,12 @@ you might have to `bundle exec` commands below.
   - If `bosh releases` does not show your release after uploading
     wait for all `bosh tasks` to finish
 
-- `bosh deployment dev/deployments/nats.yml`
+- `bosh deployment dev/deployments/nats.yml && bosh deploy` (example single job NATS)
   - Don't forget to change director_uuid
 
-- `bosh deploy`
+- `bosh deployment dev/deployments/cf.yml && bosh deploy` (example CF)
+  - Don't forget to change director_uuid
+  - Turn on `dev/local_dns_server.rb`
 
 
 ### Debugging Options
