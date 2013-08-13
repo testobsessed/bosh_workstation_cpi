@@ -13,7 +13,7 @@ module BoshWorkstationCpi::Virtualbox
 
     def start
       @logger.debug("virtualbox.vm.#{__method__}")
-      mode = ENV["BOSH_VAGRANT_CPI_GUI"] ? "gui" : "headless"
+      mode = ENV["BOSH_WORKSTATION_CPI_GUI"] ? "gui" : "headless"
       exit_code, output = @driver.execute_raw("startvm", @uuid, "--type", mode)
 
       if exit_code == 0

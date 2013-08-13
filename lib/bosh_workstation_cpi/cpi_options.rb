@@ -22,7 +22,7 @@ module BoshWorkstationCpi
     end
 
     def local_access?
-      return false if ENV["BOSH_VAGRANT_CPI_REMOTE_ACCESS"]
+      return false if ENV["BOSH_WORKSTATION_CPI_REMOTE_ACCESS"]
       File.directory?(@store_dir)
     end
 
