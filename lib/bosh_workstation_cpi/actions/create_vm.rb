@@ -1,5 +1,5 @@
+require "bosh_workstation_cpi/network_option_collection"
 require "bosh_workstation_cpi/agent_env"
-require "bosh_workstation_cpi/virtualbox"
 
 module BoshWorkstationCpi::Actions
   class CreateVm
@@ -45,7 +45,8 @@ module BoshWorkstationCpi::Actions
       @agent_id = agent_id
       @stemcell_id = stemcell_id
       @resource_pool = resource_pool
-      @networks = networks
+      @network_options = \
+        BoshWorkstationCpi::NetworkOptionCollection.from_hash(networks)
       @disk_locality = disk_locality
       @env = env
       @logger = logger
@@ -86,19 +87,26 @@ module BoshWorkstationCpi::Actions
 
     def configure_network(vm)
       @logger.info("Configuring network for '#{vm.uuid}'")
-      vm.enable_host_only_adapter
+      configurer = @vm_manager.driver.network_configurer(vm)
+      configurer.configure(@network_options.map(&:cloud_name))
     end
 
     def build_agent_env(vm)
       @logger.info("Building agent env for '#{vm.uuid}'")
+
+      configurer = @vm_manager.driver.network_configurer(vm)
+      cloud_name_to_mac = \
+        configurer.macs(@network_options.map(&:cloud_name))
+      @network_options.add_macs(cloud_name_to_mac)
+
       BoshWorkstationCpi::AgentEnv.new.tap do |env|
         env.vm_id = vm.uuid
         env.name = vm.uuid
         env.env = @env
         env.agent_id = @agent_id
         env.agent_env = @agent_options
-        env.add_network_with_mac(@networks, vm.mac_address)
-        env.add_disks
+        env.add_networks(@network_options)
+        env.add_empty_disks
       end
     end
 

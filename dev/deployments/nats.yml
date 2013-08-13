@@ -1,6 +1,6 @@
 ---
-name: cf
-director_uuid: a6799da0-77c4-48ce-a13d-b8c52ae779f6
+name: nats
+director_uuid: 169e6b58-58dc-476e-b0b3-7485484b55ae
 
 releases:
 - name: cf
@@ -29,6 +29,16 @@ networks:
     - 192.168.56.50-192.168.56.254
     cloud_properties:
       name: vboxnet0
+- name: default2
+  subnets:
+  - range: 192.168.57.0/24
+    gateway: 192.168.57.1
+    dns:
+    - 192.168.57.1
+    static:
+    - 192.168.57.2
+    cloud_properties:
+      name: vboxnet1
 
 resource_pools:
 - name: nats
@@ -67,6 +77,10 @@ jobs:
   - name: default
     static_ips:
     - 192.168.56.3
+    default: [dns, gateway]
+  - name: default2
+    static_ips:
+    - 192.168.57.2
   properties:
     networks:
       apps: default

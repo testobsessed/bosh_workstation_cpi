@@ -33,18 +33,20 @@ module BoshWorkstationCpi
       end
     end
 
-    def add_network_with_mac(networks, mac)
-      raise ArgumentError, "networks must contain one network" \
-        unless networks.keys.size == 1
-      raise ArgumentError, "mac must not be nil" unless mac
-      formatted_mac = mac.downcase.scan(/../).join(":")
-
-      @networks = Hash[networks.map do |name, properties|
-        [name, properties.merge("mac" => formatted_mac)]
+    def add_networks(network_options)
+      @networks = Hash[network_options.map do |no|
+        [no.name, {
+          "ip" => no.ip,
+          "netmask" => no.netmask,
+          "gateway" => no.gateway,
+          "dns" => no.dns,
+          "mac" => no.formatted_mac,
+          "cloud_properties" => no.cloud,
+        }]
       end]
     end
 
-    def add_disks
+    def add_empty_disks
       @disks = {
         "system" => 0,
         "ephemeral" => nil,

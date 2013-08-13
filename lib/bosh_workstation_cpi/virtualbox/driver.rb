@@ -4,6 +4,7 @@ require "bosh_workstation_cpi/virtualbox/vm_importer"
 require "bosh_workstation_cpi/virtualbox/vm_cloner"
 require "bosh_workstation_cpi/virtualbox/vm_finder"
 require "bosh_workstation_cpi/virtualbox/cdrom_mounter"
+require "bosh_workstation_cpi/virtualbox/network_configurer"
 require "bosh_workstation_cpi/virtualbox/disk_attacher"
 require "bosh_workstation_cpi/virtualbox/disk_creator"
 require "bosh_workstation_cpi/virtualbox/resume_pause_hot_plugger"
@@ -70,6 +71,10 @@ module BoshWorkstationCpi::Virtualbox
 
     def cdrom_mounter(vm)
       CdromMounter.new(self, vm, resume_pause_hot_plugger(vm), @logger)
+    end
+
+    def network_configurer(vm)
+      NetworkConfigurer.new(self, vm, @logger)
     end
 
     def disk_creator

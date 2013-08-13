@@ -91,7 +91,7 @@ module BoshWorkstationCpi
     end
 
     def configure_networks(*args)
-      Actions::ConfigureNetworks.new(*args).run
+      Actions::ConfigureNetworks.new(@vm_manager, *args, @logger).run
     end
 
     def create_disk(*args)

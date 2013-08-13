@@ -27,15 +27,6 @@ module BoshWorkstationCpi::Virtualbox
       end
     end
 
-    def mac_address
-      @logger.debug("virtualbox.vm.#{__method__}")
-      output = @driver.execute("showvminfo", @uuid, "--machinereadable")
-      output.split("\n").each do |line|
-        return $1.to_s if line =~ /^macaddress1="(.+?)"$/
-      end
-      nil
-    end
-
     def state
       @logger.debug("virtualbox.vm.#{__method__}")
       output = @driver.execute("showvminfo", @uuid, "--machinereadable")
@@ -64,14 +55,6 @@ module BoshWorkstationCpi::Virtualbox
     def delete
       @logger.debug("virtualbox.vm.#{__method__}")
       @driver.execute("unregistervm", @uuid, "--delete")
-    end
-
-    def enable_host_only_adapter
-      @driver.execute(
-        "modifyvm",           @uuid,
-        "--nic1",             "hostonly",
-        "--hostonlyadapter1", "vboxnet0",
-      )
     end
   end
 end
