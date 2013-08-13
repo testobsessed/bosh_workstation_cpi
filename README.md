@@ -1,20 +1,33 @@
-### Installing BOSH CLI gems
+### Installation
 
-#### gem install
+Install `bosh_cli`, `bosh_cli_plugin_micro`, 
+and `bosh_workstations_cpi` as shown below:
 
-- `gem install bosh_cli              -v 1.5.0.pre.883 --source https://s3.amazonaws.com/bosh-ci-pipeline/883/gems`
-- `gem install bosh_cli_plugin_micro -v 1.5.0.pre.883 --source https://s3.amazonaws.com/bosh-ci-pipeline/883/gems`
+```
+gem install bosh_cli              -v 1.5.0.pre.883 --source https://s3.amazonaws.com/bosh-ci-pipeline/883/gems
+gem install bosh_cli_plugin_micro -v 1.5.0.pre.883 --source https://s3.amazonaws.com/bosh-ci-pipeline/883/gems
 
-#### via Gemfile
+# bosh_workstation_cpi is not on rubygems as of now
+git clone https://github.com/cppforlife/bosh_workstation_cpi
+cd bosh_workstation_cpi
+gem build bosh_workstation_cpi.gemspec
+gem install bosh_workstation_cpi*.gem
+bosh -v
+```
 
-- Add `gem :bosh_workstation_cpi, git: "https://github.com/cppforlife/bosh_workstation_cpi"`
-  to your Gemfile and then bundle
+Alternatively use bundler with included `Gemfile`
+(primarily used when developing this gem) and prefix all 
+bosh/bosh_workstation_cpi commands with `bundle exec`:
+
+```
+git clone https://github.com/cppforlife/bosh_workstation_cpi
+cd bosh_workstation_cpi
+bundle
+bundle exec bosh -v
+```
 
 
-### Using Workstation CPI
-
-Note: Depending on how you installed BOSH CLI gems
-you might have to `bundle exec` commands below.
+### Usage
 
 - Set up host-only VirtualBox network
   - Open VirtualBox
