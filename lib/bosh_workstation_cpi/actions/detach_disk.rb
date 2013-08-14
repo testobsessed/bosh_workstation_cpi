@@ -33,9 +33,12 @@ module BoshWorkstationCpi::Actions
 
     def detach_disk(vm)
       @logger.info("Detaching disk '#{@disk_id}' from vm '#{vm.uuid}'")
+
       contents = @vm_manager.get_artifact(vm.uuid, "#{@disk_id}-disk-attachment.json")
       port_and_device = JSON.parse(contents)
-      @vm_manager.disk_attacher(vm).detach(port_and_device)
+
+      disk_attacher = @vm_manager.driver.disk_attacher(vm)
+      disk_attacher.detach(port_and_device)
     end
 
     def rebuild_agent_env(vm)
