@@ -46,8 +46,8 @@ module BoshWorkstationCpi
       vm_id = Actions::CreateVm.new(
         @stemcell_manager, @vm_manager, @options.agent, 
         agent_id, stemcell_id, resource_pool, 
-        networks, disk_locality=nil, env=nil,
-      ).tap { |cv| cv.should_power_on = false }.run
+        networks, disk_locality, env,
+      ).run
 
       disk_id = Actions::CreateDisk.new(
         @disk_manager, resource_pool["disk"], nil).run

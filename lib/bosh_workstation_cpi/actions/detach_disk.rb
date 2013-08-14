@@ -52,10 +52,8 @@ module BoshWorkstationCpi::Actions
       @vm_manager.create_artifact(vm.uuid, "env.json", agent_env.as_json)
       @vm_manager.create_artifact(vm.uuid, "env.iso", agent_env.as_iso)
 
-      @vm_manager.driver.cdrom_mounter(vm).tap do |cdrom|
-        cdrom.unmount
-        cdrom.mount(@vm_manager.artifact_path(vm.uuid, "env.iso"))
-      end
+      cdrom = @vm_manager.driver.cdrom_mounter(vm)
+      cdrom.mount(@vm_manager.artifact_path(vm.uuid, "env.iso"))
     end
   end
 end

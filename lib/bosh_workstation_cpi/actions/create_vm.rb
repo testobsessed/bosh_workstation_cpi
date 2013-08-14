@@ -3,9 +3,6 @@ require "bosh_workstation_cpi/virtualbox"
 
 module BoshWorkstationCpi::Actions
   class CreateVm
-    attr_accessor :should_power_on
-    alias_method :should_power_on?, :should_power_on
-
     # Creates a VM - creates (and powers on) a VM from a stemcell with the proper resources
     # and on the specified network. When disk locality is present the VM will be placed near
     # the provided disk so it won't have to move when the disk is attached later.
@@ -57,7 +54,7 @@ module BoshWorkstationCpi::Actions
       vm        = create_vm
       agent_env = build_agent_env(vm)
       mount_cdrom_with_agent_env(vm, agent_env)
-      power_on(vm) if should_power_on?
+      power_on(vm)
       vm.uuid
     rescue Exception => e
       clean_up_partial_vm(vm)

@@ -2,9 +2,10 @@ require "bosh_workstation_cpi/virtualbox/error"
 
 module BoshWorkstationCpi::Virtualbox
   class DiskAttacher
-    def initialize(driver, vm, logger=Logger.new(STDERR))
+    def initialize(driver, vm, hot_plugger, logger=Logger.new(STDERR))
       @driver = driver
       @vm = vm
+      @hot_plugger = hot_plugger
       @logger = logger
     end
 
@@ -19,15 +20,18 @@ module BoshWorkstationCpi::Virtualbox
       @logger.debug("virtualbox.disk_attacher.#{__method__} " + 
         "uuid=#{@vm.uuid} path=#{path} port_and_device=#{port_and_device.inspect}")
 
-      @driver.execute(
-        "storageattach", @vm.uuid,
-        "--storagectl",  "SCSI Controller",
-        "--port",        port_and_device.first.to_s,
-        "--device",      port_and_device.last.to_s,
-        "--type",        "hdd",
-        "--medium",      "#{path}/disk.vmdk",
-        "--mtype",       "normal",
-      )
+      @hot_plugger.hot_plug do
+        @driver.execute(
+          "storageattach", @vm.uuid,
+          "--storagectl",  "SCSI Controller",
+          "--port",        port_and_device.first.to_s,
+          "--device",      port_and_device.last.to_s,
+          "--type",        "hdd",
+          "--medium",      "#{path}/disk.vmdk",
+          "--mtype",       "normal",
+        )
+      end
+
       port_and_device
     end
 

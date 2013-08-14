@@ -18,11 +18,9 @@ module BoshWorkstationCpi::Actions
     def run
       vm = check_vm
       check_disk
-      power_off(vm)
       port      = attach_disk(vm)
       agent_env = rebuild_agent_env(vm, port)
       mount_cdrom_with_agent_env(vm, agent_env)
-      power_on(vm)
     end
 
     private
@@ -36,11 +34,6 @@ module BoshWorkstationCpi::Actions
       @logger.info("Checking disk '#{@disk_id}'")
       raise "Could not find disk #{@disk_id}" \
         unless @disk_manager.exists?(@disk_id)
-    end
-
-    def power_off(vm)
-      @logger.info("Powering off vm '#{vm.uuid}'")
-      vm.halt if vm.running?
     end
 
     def attach_disk(vm)
@@ -68,16 +61,8 @@ module BoshWorkstationCpi::Actions
       @vm_manager.create_artifact(vm.uuid, "env.json", agent_env.as_json)
       @vm_manager.create_artifact(vm.uuid, "env.iso", agent_env.as_iso)
 
-      @vm_manager.driver.cdrom_mounter(vm).tap do |cdrom|
-        cdrom.unmount
-        cdrom.mount(@vm_manager.artifact_path(vm.uuid, "env.iso"))
-      end
-    end
-
-    def power_on(vm)
-      @logger.info("Powering on vm '#{vm.uuid}'")
-      vm.start
-      sleep(120)
+      cdrom = @vm_manager.driver.cdrom_mounter(vm)
+      cdrom.mount(@vm_manager.artifact_path(vm.uuid, "env.iso"))
     end
   end
 end

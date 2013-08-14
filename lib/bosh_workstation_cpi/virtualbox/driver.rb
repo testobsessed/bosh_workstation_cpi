@@ -5,6 +5,7 @@ require "bosh_workstation_cpi/virtualbox/vm_finder"
 require "bosh_workstation_cpi/virtualbox/cdrom_mounter"
 require "bosh_workstation_cpi/virtualbox/disk_attacher"
 require "bosh_workstation_cpi/virtualbox/disk_creator"
+require "bosh_workstation_cpi/virtualbox/resume_pause_hot_plugger"
 
 module BoshWorkstationCpi::Virtualbox
   class Driver
@@ -66,7 +67,7 @@ module BoshWorkstationCpi::Virtualbox
     end
 
     def cdrom_mounter(vm)
-      CdromMounter.new(self, vm, @logger)
+      CdromMounter.new(self, vm, resume_pause_hot_plugger(vm), @logger)
     end
 
     def disk_creator
@@ -74,7 +75,13 @@ module BoshWorkstationCpi::Virtualbox
     end
 
     def disk_attacher(vm)
-      DiskAttacher.new(self, vm, @logger)
+      DiskAttacher.new(self, vm, resume_pause_hot_plugger(vm), @logger)
+    end
+
+    private
+
+    def resume_pause_hot_plugger(vm)
+      ResumePauseHotPlugger.new(self, vm, @logger)
     end
   end
 end
