@@ -38,14 +38,17 @@ module BoshWorkstationCpi::Virtualbox
     def detach(port_and_device)
       @logger.debug("virtualbox.disk_attacher.#{__method__} " + 
         "uuid=#{@vm.uuid} port_and_device=#{port_and_device}")
-      @driver.execute(
-        "storageattach", @vm.uuid,
-        "--storagectl",  "SCSI Controller",
-        "--port",        port_and_device.first.to_s,
-        "--device",      port_and_device.last.to_s,
-        "--type",        "hdd",
-        "--medium",      "none", # removes
-      )
+
+      @hot_plugger.hot_plug do
+        @driver.execute(
+          "storageattach", @vm.uuid,
+          "--storagectl",  "SCSI Controller",
+          "--port",        port_and_device.first.to_s,
+          "--device",      port_and_device.last.to_s,
+          "--type",        "hdd",
+          "--medium",      "none", # removes
+        )
+      end
     end
 
     private

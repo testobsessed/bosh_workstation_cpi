@@ -103,7 +103,7 @@ module BoshWorkstationCpi
 
     def detach_disk(*args)
       Actions::DetachDisk.new(
-        @vm_manager, @disk_manager, *args, @logger).run
+        @vm_manager, @disk_manager, *args, "persistent", @logger).run
     end
 
     # List the attached disks of the VM.

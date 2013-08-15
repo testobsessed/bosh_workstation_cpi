@@ -2,11 +2,16 @@ module BoshWorkstationCpi::Actions
   class DetachDisk
     # @param [String] vm vm id that was once returned by {#create_vm}
     # @param [String] disk disk id that was once returned by {#create_disk}
-    def initialize(vm_manager, disk_manager, vm_id, disk_id, logger)
+    def initialize(vm_manager, disk_manager, vm_id, disk_id, type, logger)
       @vm_manager = vm_manager
       @disk_manager = disk_manager
       @vm_id = vm_id
       @disk_id = disk_id
+
+      raise ArgumentError, "type is unknown" \
+        unless %w(ephemeral persistent).include?(type)
+      @type = type
+
       @logger = logger
     end
 
@@ -34,7 +39,8 @@ module BoshWorkstationCpi::Actions
     def detach_disk(vm)
       @logger.info("Detaching disk '#{@disk_id}' from vm '#{vm.uuid}'")
 
-      contents = @vm_manager.get_artifact(vm.uuid, "#{@disk_id}-disk-attachment.json")
+      contents = @vm_manager.get_artifact(
+        vm.uuid, "#{@disk_id}-disk-attachment.json")
       port_and_device = JSON.parse(contents)
 
       disk_attacher = @vm_manager.driver.disk_attacher(vm)
@@ -45,7 +51,7 @@ module BoshWorkstationCpi::Actions
       @logger.info("Rebuilding agent env for '#{vm.uuid}' without disk '#{@disk_id}'")
       contents = @vm_manager.get_artifact(vm.uuid, "env.json")
       BoshWorkstationCpi::AgentEnv.from_json(contents).tap do |env|
-        env.delete_disk(@disk_id)
+        env.send("remove_#{@type}_disk", @disk_id)
       end
     end
 

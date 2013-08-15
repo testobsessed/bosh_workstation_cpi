@@ -58,6 +58,10 @@ module BoshWorkstationCpi
       @disks["ephemeral"] = unit_number
     end
 
+    def remove_ephemeral_disk(disk_id)
+      @disks["ephemeral"] = nil
+    end
+
     def add_persistent_disk(disk_id, unit_number)
       @disks["persistent"][disk_id] = unit_number
     end
