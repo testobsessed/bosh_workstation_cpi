@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+
+require "shellwords"
+
+target_agrs = Shellwords.shelljoin(
+  ["192.168.56.2", "vcap", "c1oudc0w"])
+
+exec([
+  "bin/bosh_workstation_cpi_inject #{target_agrs}",
+  "bin/bosh_workstation_cpi_switch #{target_agrs}",
+  "sleep 45",
+  "bosh status"
+].join(" && "))
