@@ -6,29 +6,37 @@ require "bosh_workstation_cpi/actions"
 
 module BoshWorkstationCpi
   class Cpi
-    def initialize(options, logger=Logger.new(STDERR))
-      @options = CpiOptions.from_vsphere(options)
-      @logger = logger
+    def self.default_logger
+      if defined?(Bosh::Clouds::Config)
+        Bosh::Clouds::Config.logger 
+      else
+        Logger.new(STDERR)
+      end
+    end
+
+    def initialize(options, logger=nil)
+      @logger  = logger || self.class.default_logger
+      @options = CpiOptions.from_vsphere(options, @logger)
 
       if @options.local_access?
-        runner = Runners::Local.new(logger)
+        runner = Runners::Local.new(@logger)
       else
         runner = Runners::Remote.new(
           @options.host,
           @options.user,
           @options.password,
-          logger,
+          @logger,
         )
       end
 
-      driver = Virtualbox::Driver.new(runner, logger)
+      driver = Virtualbox::Driver.new(runner, @logger)
 
       @stemcell_manager = Managers::Stemcell.new(
-        @options.stemcells_dir, runner, logger)
+        @options.stemcells_dir, runner, @logger)
       @vm_manager = Managers::Vm.new(
-        @options.vms_dir, runner, driver, logger)
+        @options.vms_dir, runner, driver, @logger)
       @disk_manager = Managers::Disk.new(
-        @options.disks_dir, runner, driver, logger)
+        @options.disks_dir, runner, driver, @logger)
     end
 
     def create_stemcell(*args)
