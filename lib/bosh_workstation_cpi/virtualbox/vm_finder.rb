@@ -8,7 +8,7 @@ module BoshWorkstationCpi::Virtualbox
       @logger = logger
     end
 
-    def find(uuid, options={})
+    def find(uuid)
       @driver.execute("showvminfo", uuid)
       Vm.new(@driver, uuid, @logger)
     end

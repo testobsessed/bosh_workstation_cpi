@@ -4,8 +4,11 @@ module BoshWorkstationCpi::Managers
   class Stemcell
     PREFIX = "sc"
 
-    def initialize(stemcells_dir, runner, logger)
+    attr_reader :driver
+
+    def initialize(stemcells_dir, runner, driver, logger)
       @stemcells_dir = stemcells_dir
+      @driver = driver
       @runner = runner
       @logger = logger
     end
@@ -34,11 +37,32 @@ module BoshWorkstationCpi::Managers
       @runner.execute!("rm", "-rf", path(id))
     end
 
+    def artifact_path(id, key)
+      "#{path(id)}/#{key}"
+    end
+
+    def create_artifact(id, key, contents)
+      create_stemcells_dir
+      create_stemcell_dir(id)
+      @logger.debug("managers.stemcell.#{__method__} id=#{id} key=#{key}")
+      @runner.put!(artifact_path(id, key), contents)
+    end
+
+    def get_artifact(id, key)
+      @logger.debug("managers.stemcell.#{__method__} id=#{id} key=#{key}")
+      @runner.get!(artifact_path(id, key))
+    end
+
     private
 
     def create_stemcells_dir
       @logger.debug("managers.stemcell.#{__method__} dir=#{@stemcells_dir}")
       @runner.execute!("mkdir", "-p", @stemcells_dir)
+    end
+
+    def create_stemcell_dir(id)
+      @logger.debug("managers.stemcell.#{__method__} id=#{id}")
+      @runner.execute!("mkdir", "-p", path(id))
     end
   end
 end

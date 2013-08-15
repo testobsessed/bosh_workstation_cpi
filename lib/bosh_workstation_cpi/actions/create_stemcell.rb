@@ -16,6 +16,10 @@ module BoshWorkstationCpi::Actions
       dir         = extract_stemcell
       ovf_path    = check_ovf_file(dir)
       stemcell_id = store_stemcell(dir)
+      vm          = create_vm(stemcell_id)
+      set_vm_name(vm)
+      prepare_vm(vm)
+      stemcell_id
     ensure
       clean_up_extracted_stemcell(dir)
     end
@@ -41,6 +45,26 @@ module BoshWorkstationCpi::Actions
     def store_stemcell(dir)
       @logger.info("Storing stemcell")
       @stemcell_manager.create(dir)
+    end
+
+    def create_vm(stemcell_id)
+      @logger.info("Creating stemcell VM")
+      stemcell_path = @stemcell_manager.path(stemcell_id)
+      importer = @stemcell_manager.driver.vm_importer
+      importer.import("#{stemcell_path}/image.ovf").tap do |vm|
+        @stemcell_manager.create_artifact(
+          stemcell_id, "vm-id", vm.uuid)
+      end
+    end
+
+    def set_vm_name(vm)
+      @logger.info("Setting name for stemcell VM '#{vm.uuid}'")
+      vm.name = "sc-#{vm.uuid}"
+    end
+
+    def prepare_vm(vm)
+      @logger.info("Preparing stemcell VM '#{vm.uuid}'")
+      @stemcell_manager.driver.vm_cloner.prepare(vm)
     end
 
     def clean_up_extracted_stemcell(dir)

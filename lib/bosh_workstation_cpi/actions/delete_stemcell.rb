@@ -9,6 +9,7 @@ module BoshWorkstationCpi::Actions
 
     def run
       check_stemcell
+      delete_vm
       delete_stemcell
     end
 
@@ -18,6 +19,13 @@ module BoshWorkstationCpi::Actions
       @logger.info("Checking stemcell '#{@stemcell_id}'")
       raise "Could not find stemcell #{@stemcell_id}" \
         unless @stemcell_manager.exists?(@stemcell_id)
+    end
+
+    def delete_vm
+      @logger.info("Deleting stemcell VM '#{@stemcell_id}'")
+      vm_id = @stemcell_manager.get_artifact(@stemcell_id, "vm-id")
+      vm    = @stemcell_manager.driver.vm_finder.find(vm_id)
+      @stemcell_manager.driver.vm_cloner.clone(vm)
     end
 
     def delete_stemcell

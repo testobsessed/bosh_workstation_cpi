@@ -1,6 +1,7 @@
 require "shellwords"
 require "bosh_workstation_cpi/virtualbox/error"
 require "bosh_workstation_cpi/virtualbox/vm_importer"
+require "bosh_workstation_cpi/virtualbox/vm_cloner"
 require "bosh_workstation_cpi/virtualbox/vm_finder"
 require "bosh_workstation_cpi/virtualbox/cdrom_mounter"
 require "bosh_workstation_cpi/virtualbox/disk_attacher"
@@ -57,6 +58,10 @@ module BoshWorkstationCpi::Virtualbox
 
     def vm_importer
       VmImporter.new(self, @logger)
+    end
+
+    def vm_cloner
+      VmCloner.new(self, @logger)
     end
 
     def vm_finder

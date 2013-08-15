@@ -32,7 +32,7 @@ module BoshWorkstationCpi
       driver = Virtualbox::Driver.new(runner, @logger)
 
       @stemcell_manager = Managers::Stemcell.new(
-        @options.stemcells_dir, runner, @logger)
+        @options.stemcells_dir, runner, driver, @logger)
       @vm_manager = Managers::Vm.new(
         @options.vms_dir, runner, driver, @logger)
       @disk_manager = Managers::Disk.new(

@@ -53,7 +53,9 @@ module BoshWorkstationCpi::Actions
 
     def run
       check_stemcell
-      vm        = create_vm
+      vm = clone_vm
+      set_name(vm)
+      configure_network(vm)
       agent_env = build_agent_env(vm)
       mount_cdrom_with_agent_env(vm, agent_env)
       power_on(vm)
@@ -71,15 +73,21 @@ module BoshWorkstationCpi::Actions
         unless @stemcell_manager.exists?(@stemcell_id)
     end
 
-    def create_vm
-      @logger.info("Creating VM")
-      stemcell_path = @stemcell_manager.path(@stemcell_id)
+    def clone_vm
+      @logger.info("Cloning VM from stemcell VM")
+      stemcell_vm_id = @stemcell_manager.get_artifact(@stemcell_id, "vm-id")
+      stemcell_vm    = @stemcell_manager.driver.vm_finder.find(stemcell_vm_id)
+      @vm_manager.driver.vm_cloner.clone(stemcell_vm)
+    end
 
-      importer = @vm_manager.driver.vm_importer
-      importer.import("#{stemcell_path}/image.ovf").tap do |vm|
-        vm.name = "vm-#{vm.uuid}"
-        vm.enable_host_only_adapter
-      end
+    def set_name(vm)
+      @logger.info("Setting name for '#{vm.uuid}'")
+      vm.name = "vm-#{vm.uuid}"
+    end
+
+    def configure_network(vm)
+      @logger.info("Configuring network for '#{vm.uuid}'")
+      vm.enable_host_only_adapter
     end
 
     def build_agent_env(vm)
