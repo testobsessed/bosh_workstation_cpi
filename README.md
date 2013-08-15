@@ -122,3 +122,8 @@ bundle exec bosh -v
 
 - Run irb with access to Director gems:
   `sudo GEM_HOME=/var/vcap/packages/director/gem_home /var/vcap/packages/ruby/bin/irb`
+
+
+### Thanks
+
+Pieces of `BoshWorkstationCpi::VirtualBox::Driver` class are taken from Vagrant.

@@ -40,7 +40,7 @@ module BoshWorkstationCpi::Virtualbox
             "Error message about vboxnetctl"
         end
 
-        if output =~ /VBoxManage([.a-z]+?): error:/
+        if output =~ /VBoxManage: error:/
           @logger.info("VBoxManage error text found, assuming error.")
           errored = true
         end
