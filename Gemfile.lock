@@ -81,6 +81,7 @@ GEM
       ruby_vim_sdk (~> 1.5.0.pre.883)
       sequel (~> 3.43.0)
     builder (3.1.4)
+    coderay (1.0.9)
     daemons (1.1.9)
     eventmachine (1.0.3)
     excon (0.25.3)
@@ -158,3 +159,4 @@ DEPENDENCIES
   bosh_cli (= 1.5.0.pre.883)
   bosh_cli_plugin_micro (= 1.5.0.pre.883)
   bosh_workstation_cpi!
+  pry

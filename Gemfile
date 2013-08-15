@@ -5,3 +5,6 @@ gem "bosh_cli",              "1.5.0.pre.883"
 gem "bosh_cli_plugin_micro", "1.5.0.pre.883"
 
 gemspec
+
+# Used for ./dev/console
+gem "pry"

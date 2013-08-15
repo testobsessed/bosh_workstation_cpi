@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+
+require "pry"
+require "logger"
+require "bosh_workstation_cpi/cpi"
+
+include BoshWorkstationCpi
+
+logger = Logger.new(STDOUT)
+
+local_runner = Runners::Local.new(logger)
+local_driver = Virtualbox::Driver.new(local_runner, logger)
+
+microbosh_path = File.expand_path("#{__FILE__}/../deployments/micro/micro_bosh.yml")
+cpi_options = CpiOptions.from_microbosh_file(microbosh_path, logger)
+
+remote_runner = Runners::Remote.new(
+  cpi_options.host, cpi_options.user, cpi_options.password, logger)
+remote_driver = Virtualbox::Driver.new(remote_runner, logger)
+
+binding.pry

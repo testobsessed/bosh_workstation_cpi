@@ -1,7 +1,14 @@
+require "yaml"
+
 module BoshWorkstationCpi
   class CpiOptions
     attr_reader :host, :user, :password
     attr_reader :agent
+
+    def self.from_microbosh_file(path, logger)
+      hash = YAML.load_file(path)
+      from_vsphere(hash["cloud"]["properties"], logger)
+    end
 
     def self.from_vsphere(options, logger)
       vcenter     = options["vcenters"].first
