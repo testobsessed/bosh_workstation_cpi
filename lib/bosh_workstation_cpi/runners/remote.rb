@@ -18,18 +18,17 @@ module BoshWorkstationCpi::Runners
       logger.info("remote_runner.#{__method__} host=#{cmd}")
 
       exit_status = nil
+      output = ""
+
       record_exit_status = \
         proc { |_, data| exit_status = data.read_long }
-
-      output = ""
-      record_output = proc { |_, data| output += data.to_s }
 
       ssh_lock do
         ssh.open_channel do |ch|
           ch.exec(cmd) do |_, success|
             raise Error, "Command '#{cmd}' failed to start" unless success
-            ch.on_data(&record_output)
-            ch.on_extended_data(&record_output)
+            ch.on_data          { |   _, data| output += data.to_s }
+            ch.on_extended_data { |_, _, data| output += data.to_s }
             ch.on_request("exit-status", &record_exit_status)
             ch.on_request("exit-signal", &record_exit_status)
           end
