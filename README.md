@@ -79,7 +79,7 @@ bundle exec bosh -v
   - Turn on `dev/local_dns_server.rb`
 
 
-### Debugging Options
+### Debugging
 
 - `BOSH_WORKSTATION_CPI_GUI` forces VirtualBox provider
   to use GUI when starting up VMs
@@ -88,6 +88,12 @@ bundle exec bosh -v
 - `BOSH_WORKSTATION_CPI_REMOTE_ACCESS` forces CPI
   to always use remote strategy 
   even when local access is possible
+
+- Tail 'dev/deployments/micro/bosh_micro_deploy.log'
+  to see detailed logs when doing MicroBOSH deploy
+
+- `bosh task <INT> --debug` to see detailed logs
+  when doing any actions on the Director
 
 
 ### BOSH Integration
