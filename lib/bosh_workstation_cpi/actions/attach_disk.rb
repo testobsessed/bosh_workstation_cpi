@@ -48,7 +48,7 @@ module BoshWorkstationCpi::Actions
     end
 
     def rebuild_agent_env(vm, port)
-      @logger.info("Rebuilding agent env for #{vm.uuid} with #{@disk_id}")
+      @logger.info("Rebuilding agent env for '#{vm.uuid}' with '#{@disk_id}'")
       contents = @vm_manager.get_artifact(vm.uuid, "env.json")
       BoshWorkstationCpi::AgentEnv.from_json(contents).tap do |env|
         env.send("add_#{@type}_disk", @disk_id, port)
