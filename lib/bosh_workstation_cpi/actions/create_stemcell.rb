@@ -5,7 +5,7 @@ module BoshWorkstationCpi::Actions
   class CreateStemcell
     # @param [String] image_path path to an opaque blob containing the stemcell image
     # @param [Hash] cloud_properties properties required for creating this template specific to a CPI
-    def initialize(stemcell_manager, image_path, cloud_properties, logger=Logger.new(STDERR))
+    def initialize(stemcell_manager, image_path, cloud_properties, logger)
       @stemcell_manager = stemcell_manager
       @image_path = image_path
       @cloud_properties = cloud_properties

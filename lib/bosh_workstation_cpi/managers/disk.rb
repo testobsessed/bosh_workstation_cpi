@@ -6,7 +6,7 @@ module BoshWorkstationCpi::Managers
 
     attr_reader :driver
 
-    def initialize(disks_dir, runner, driver, logger=Logger.new(STDERR))
+    def initialize(disks_dir, runner, driver, logger)
       @disks_dir = disks_dir
       @runner = runner
       @driver = driver

@@ -1,7 +1,7 @@
 module BoshWorkstationCpi::Actions
   class HasVm
     # @param [String] vm vm id that was once returned by {#create_vm}
-    def initialize(vm_manager, vm_id, logger=Logger.new(STDERR))
+    def initialize(vm_manager, vm_id, logger)
       @vm_manager = vm_manager
       @vm_id = vm_id
       @logger = logger

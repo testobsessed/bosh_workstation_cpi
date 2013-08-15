@@ -3,7 +3,7 @@ module BoshWorkstationCpi::Actions
     # Deletes a disk
     # Will raise an exception if the disk is attached to a VM
     # @param [String] disk disk id that was once returned by {#create_disk}
-    def initialize(disk_manager, disk_id, logger=Logger.new(STDERR))
+    def initialize(disk_manager, disk_id, logger)
       @disk_manager = disk_manager
       @disk_id = disk_id
       @logger = logger

@@ -4,7 +4,7 @@ module BoshWorkstationCpi::Managers
   class Stemcell
     PREFIX = "sc"
 
-    def initialize(stemcells_dir, runner, logger=Logger.new(STDERR))
+    def initialize(stemcells_dir, runner, logger)
       @stemcells_dir = stemcells_dir
       @runner = runner
       @logger = logger

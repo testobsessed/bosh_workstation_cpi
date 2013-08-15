@@ -2,7 +2,7 @@ require "bosh_workstation_cpi/virtualbox/error"
 
 module BoshWorkstationCpi::Virtualbox
   class DiskAttacher
-    def initialize(driver, vm, hot_plugger, logger=Logger.new(STDERR))
+    def initialize(driver, vm, hot_plugger, logger)
       @driver = driver
       @vm = vm
       @hot_plugger = hot_plugger

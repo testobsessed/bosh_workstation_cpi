@@ -2,7 +2,7 @@ module BoshWorkstationCpi::Actions
   class DetachDisk
     # @param [String] vm vm id that was once returned by {#create_vm}
     # @param [String] disk disk id that was once returned by {#create_disk}
-    def initialize(vm_manager, disk_manager, vm_id, disk_id, logger=Logger.new(STDERR))
+    def initialize(vm_manager, disk_manager, vm_id, disk_id, logger)
       @vm_manager = vm_manager
       @disk_manager = disk_manager
       @vm_id = vm_id

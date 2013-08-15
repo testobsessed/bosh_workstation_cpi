@@ -4,7 +4,7 @@ module BoshWorkstationCpi::Managers
   class Vm
     attr_reader :driver
 
-    def initialize(vms_dir, runner, driver, logger=Logger.new(STDERR))
+    def initialize(vms_dir, runner, driver, logger)
       @vms_dir = vms_dir
       @runner = runner
       @driver = driver

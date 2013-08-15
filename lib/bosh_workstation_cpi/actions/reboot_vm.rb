@@ -2,7 +2,7 @@ module BoshWorkstationCpi::Actions
   class RebootVm
     # @param [String] vm vm id that was once returned by {#create_vm}
     # @param [Optional, Hash] CPI specific options (e.g hard/soft reboot)
-    def initialize(vm_manager, vm_id, logger=Logger.new(STDERR))
+    def initialize(vm_manager, vm_id, logger)
       @vm_manager = vm_manager
       @vm_id = vm_id
       @logger = logger

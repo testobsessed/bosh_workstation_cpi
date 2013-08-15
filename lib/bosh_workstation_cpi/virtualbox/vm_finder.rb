@@ -3,7 +3,7 @@ require "bosh_workstation_cpi/virtualbox/vm"
 
 module BoshWorkstationCpi::Virtualbox
   class VmFinder
-    def initialize(driver, logger=Logger.new(STDERR))
+    def initialize(driver, logger)
       @driver = driver
       @logger = logger
     end

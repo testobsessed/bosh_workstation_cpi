@@ -33,12 +33,12 @@ module BoshWorkstationCpi
 
     def create_stemcell(*args)
       Actions::CreateStemcell.new(
-        @stemcell_manager, *args).run
+        @stemcell_manager, *args, @logger).run
     end
 
     def delete_stemcell(*args)
       Actions::DeleteStemcell.new(
-        @stemcell_manager, *args).run
+        @stemcell_manager, *args, @logger).run
     end
 
     def create_vm(agent_id, stemcell_id, resource_pool,
@@ -46,34 +46,34 @@ module BoshWorkstationCpi
       vm_id = Actions::CreateVm.new(
         @stemcell_manager, @vm_manager, @options.agent, 
         agent_id, stemcell_id, resource_pool, 
-        networks, disk_locality, env,
+        networks, disk_locality, env, @logger,
       ).run
 
       disk_id = Actions::CreateDisk.new(
-        @disk_manager, resource_pool["disk"], nil).run
+        @disk_manager, resource_pool["disk"], nil, @logger).run
 
       Actions::AttachDisk.new(
         @vm_manager, @disk_manager, 
-        vm_id, disk_id, "ephemeral",
+        vm_id, disk_id, "ephemeral", @logger,
       ).run
 
       vm_id
     end
 
     def delete_vm(*args)
-      Actions::DeleteVm.new(@vm_manager, *args).run
+      Actions::DeleteVm.new(@vm_manager, *args, @logger).run
     end
 
     def has_vm?(*args)
-      Actions::HasVm.new(@vm_manager, *args).run
+      Actions::HasVm.new(@vm_manager, *args, @logger).run
     end
 
     def reboot_vm(*args)
-      Actions::RebootVm.new(@vm_manager, *args).run
+      Actions::RebootVm.new(@vm_manager, *args, @logger).run
     end
 
     def set_vm_metadata(*args)
-      Actions::SetVmMetadata.new(@vm_manager, *args).run
+      Actions::SetVmMetadata.new(@vm_manager, *args, @logger).run
     end
 
     def configure_networks(*args)
@@ -81,21 +81,21 @@ module BoshWorkstationCpi
     end
 
     def create_disk(*args)
-      Actions::CreateDisk.new(@disk_manager, *args).run
+      Actions::CreateDisk.new(@disk_manager, *args, @logger).run
     end
 
     def delete_disk(*args)
-      Actions::DeleteDisk.new(@disk_manager, *args).run
+      Actions::DeleteDisk.new(@disk_manager, *args, @logger).run
     end
 
     def attach_disk(*args)
       Actions::AttachDisk.new(
-        @vm_manager, @disk_manager, *args, "persistent").run
+        @vm_manager, @disk_manager, *args, "persistent", @logger).run
     end
 
     def detach_disk(*args)
       Actions::DetachDisk.new(
-        @vm_manager, @disk_manager, *args).run
+        @vm_manager, @disk_manager, *args, @logger).run
     end
 
     # List the attached disks of the VM.

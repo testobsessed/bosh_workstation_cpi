@@ -36,7 +36,9 @@ module BoshWorkstationCpi::Actions
     # @param [optional, String, Array] disk_locality disk id(s) if known of the disk(s) that will be
     #                                  attached to this vm
     # @param [optional, Hash] env environment that will be passed to this vm
-    def initialize(stemcell_manager, vm_manager, agent_options, agent_id, stemcell_id, resource_pool, networks, disk_locality=nil, env=nil, logger=Logger.new(STDERR))
+    def initialize(stemcell_manager, vm_manager, agent_options, 
+                   agent_id, stemcell_id, resource_pool, 
+                   networks, disk_locality=nil, env=nil, logger)
       @stemcell_manager = stemcell_manager
       @vm_manager = vm_manager
       @agent_options = agent_options

@@ -4,7 +4,7 @@ module BoshWorkstationCpi::Runners
   class Base
     class Error < StandardError; end
 
-    def initialize(logger=Logger.new(STDERR))
+    def initialize(logger)
       @logger = logger
     end
 

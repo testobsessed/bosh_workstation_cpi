@@ -9,7 +9,7 @@ require "bosh_workstation_cpi/virtualbox/resume_pause_hot_plugger"
 
 module BoshWorkstationCpi::Virtualbox
   class Driver
-    def initialize(runner, logger=Logger.new(STDERR))
+    def initialize(runner, logger)
       @runner = runner
       @logger = logger
     end

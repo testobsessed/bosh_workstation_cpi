@@ -4,7 +4,7 @@ module BoshWorkstationCpi::Virtualbox
   class Vm
     attr_reader :uuid
 
-    def initialize(driver, uuid, logger=Logger.new(STDERR))
+    def initialize(driver, uuid, logger)
       @driver = driver
       raise ArgumentError, "uuid must not be nil" \
         unless @uuid = uuid

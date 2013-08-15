@@ -1,7 +1,7 @@
 module BoshWorkstationCpi::Actions
   class DeleteStemcell
     # @param [String] stemcell stemcell id that was once returned by {#create_stemcell}
-    def initialize(stemcell_manager, stemcell_id, logger=Logger.new(STDERR))
+    def initialize(stemcell_manager, stemcell_id, logger)
       @stemcell_manager = stemcell_manager
       @stemcell_id = stemcell_id
       @logger = logger

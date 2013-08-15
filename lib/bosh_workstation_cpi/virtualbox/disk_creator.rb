@@ -1,6 +1,6 @@
 module BoshWorkstationCpi::Virtualbox
   class DiskCreator
-    def initialize(driver, logger=Logger.new(STDERR))
+    def initialize(driver, logger)
       @driver = driver
       @logger = logger
     end

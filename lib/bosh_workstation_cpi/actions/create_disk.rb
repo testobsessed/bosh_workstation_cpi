@@ -2,7 +2,7 @@ module BoshWorkstationCpi::Actions
   class CreateDisk
     # @param [Integer] size disk size in MB
     # @param [optional, String] vm_locality vm id if known of the VM that this disk will be attached to
-    def initialize(disk_manager, size, vm_locality, logger=Logger.new(STDERR))
+    def initialize(disk_manager, size, vm_locality, logger)
       @disk_manager = disk_manager
 
       raise ArgumentError, "size must be > 0" \

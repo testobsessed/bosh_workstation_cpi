@@ -4,7 +4,7 @@ module BoshWorkstationCpi::Actions
   class SetVmMetadata
     # @param [String] vm vm id that was once returned by {#create_vm}
     # @param [Hash] metadata metadata key/value pairs
-    def initialize(vm_manager, vm_id, metadata, logger=Logger.new(STDERR))
+    def initialize(vm_manager, vm_id, metadata, logger)
       @vm_manager = vm_manager
       @vm_id = vm_id
       @metadata = metadata
