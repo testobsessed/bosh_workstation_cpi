@@ -14,12 +14,9 @@ module BoshWorkstationCpi::Virtualbox
       @logger = logger
     end
 
-    def execute_raw(*cmd_pieces)
-      @runner.execute("VBoxManage", *cmd_pieces)
-    end
-
     def execute(*args)
-      exit_code, output = execute_raw(*args)
+      options           = args.last.is_a?(Hash) ? args.pop : {}
+      exit_code, output = @runner.execute("VBoxManage", *args)
 
       if exit_code != 0
         if exit_code == 126
@@ -29,7 +26,7 @@ module BoshWorkstationCpi::Virtualbox
           raise BoshWorkstationCpi::Virtualbox::Error, \
             "Most likely corrupted VirtualBox installation"
         else
-          errored = true
+          errored = !options[:ignore_non_zero_exit_code]
         end
       else
         # Sometimes, VBoxManage fails but doesn't actual return a non-zero exit code.

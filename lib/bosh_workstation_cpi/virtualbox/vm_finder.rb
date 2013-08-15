@@ -9,14 +9,8 @@ module BoshWorkstationCpi::Virtualbox
     end
 
     def find(uuid, options={})
-      exit_code, _ = @driver.execute_raw("showvminfo", uuid)
-
-      if exit_code.zero?
-        Vm.new(@driver, uuid, @logger)
-      elsif options[:raise] != false
-        raise BoshWorkstationCpi::Virtualbox::Error, \
-          "Failed to find VM with '#{uuid}'"
-      end
+      @driver.execute("showvminfo", uuid)
+      Vm.new(@driver, uuid, @logger)
     end
   end
 end

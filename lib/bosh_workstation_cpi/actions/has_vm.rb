@@ -10,7 +10,9 @@ module BoshWorkstationCpi::Actions
     # @return [Boolean] True if the vm exists
     def run
       @logger.info("Checking vm")
-      @vm_manager.driver.vm_finder.find(@vm_id, raise: false)
+      !!@vm_manager.driver.vm_finder.find(@vm_id)
+    rescue BoshWorkstationCpi::Virtualbox::Error
+      false
     end
   end
 end

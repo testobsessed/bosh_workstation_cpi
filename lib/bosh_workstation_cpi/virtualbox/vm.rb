@@ -13,14 +13,15 @@ module BoshWorkstationCpi::Virtualbox
 
     def start
       @logger.debug("virtualbox.vm.#{__method__}")
-      mode = ENV["BOSH_WORKSTATION_CPI_GUI"] ? "gui" : "headless"
-      exit_code, output = @driver.execute_raw("startvm", @uuid, "--type", mode)
 
-      if exit_code == 0
-        return true
-      elsif output =~ /VM ".+?" has been successfully started/
-        return true
-      else
+      mode = ENV["BOSH_WORKSTATION_CPI_GUI"] ? "gui" : "headless"
+      output = @driver.execute(
+        "startvm", @uuid, 
+        "--type",  mode,
+        {ignore_non_zero_exit_code: true},
+      )
+
+      unless output =~ /VM ".+?" has been successfully started/
         raise BoshWorkstationCpi::Virtualbox::Error, \
           "Failed to start VM '#{@uuid}'"
       end
