@@ -60,10 +60,16 @@ module BoshWorkstationCpi
       disk_id = Actions::CreateDisk.new(
         @disk_manager, resource_pool["disk"], nil, @logger).run
 
+      # create_vm CPI action *must* attach ephemeral disk
+      # *before* powering on VM, otherwise, bosh_agent
+      # will not properly bootstrap environment.
       Actions::AttachDisk.new(
         @vm_manager, @disk_manager, 
         vm_id, disk_id, "ephemeral", @logger,
       ).run
+
+      Actions::RebootVm.new(
+        @vm_manager, vm_id, @logger).run
 
       vm_id
     end

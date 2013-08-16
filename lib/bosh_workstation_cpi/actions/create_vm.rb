@@ -58,7 +58,6 @@ module BoshWorkstationCpi::Actions
       configure_network(vm)
       agent_env = build_agent_env(vm)
       mount_cdrom_with_agent_env(vm, agent_env)
-      power_on(vm)
       vm.uuid
     rescue Exception => e
       clean_up_partial_vm(vm)
@@ -111,11 +110,6 @@ module BoshWorkstationCpi::Actions
 
       cdrom = @vm_manager.driver.cdrom_mounter(vm)
       cdrom.mount(@vm_manager.artifact_path(vm.uuid, "env.iso"))
-    end
-
-    def power_on(vm)
-      @logger.info("Powering on vm '#{vm.uuid}'")
-      vm.start
     end
 
     def clean_up_partial_vm(vm)
