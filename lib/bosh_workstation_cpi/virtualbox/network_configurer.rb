@@ -33,7 +33,9 @@ module BoshWorkstationCpi::Virtualbox
 
     # Attaching NICs to running VM is not allowed,
     # so 4 NICs will always be connected.
-    MAX_NICS = 4
+    # >>> Having problems with compiling golang 1.1.1 on machine with,
+    # >>> not-configured but present interfaces so setting # of NICs to 1.
+    MAX_NICS = 1
 
     # Establish consistent order of nic # to network names.
     def build_nic_to_name(network_names)
