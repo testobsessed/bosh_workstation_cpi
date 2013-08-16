@@ -213,7 +213,8 @@ jobs:
     uaa:
       url: http://uaa.192.168.56.8.xip.io
       jwt:
-        verification_key: ! '-----BEGIN PUBLIC KEY-----
+        verification_key: |
+          -----BEGIN PUBLIC KEY-----
           MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo7iwMcUTeOwWaMO3vLAY
           gKaY0zjjOVJXCtx6R8h2w04CXjJrtgl/gfEIhZj/p1TIbI7A7TGxQTD6Nary2o5o
           XWSaOFnJc2yX3r2z6rRCutGm5s5+zvQKUAFtqAQye1JV70BK+89z+zJu0dT+5cXT
@@ -222,7 +223,6 @@ jobs:
           ZHJBW+v98vpbxjduDGfK1xg2YBY7JRM+BN8v7R0VXj/1QnXxTtKtIveiRo75jBYG
           HwIDAQAB
           -----END PUBLIC KEY-----
-'
     login:
       url: http://login.192.168.56.8.xip.io
     nats:
@@ -291,7 +291,8 @@ jobs:
       catalina_opts: -Xmx768m -XX:MaxPermSize=256m
       url: http://uaa.192.168.56.8.xip.io
       jwt:
-        signing_key: ! '-----BEGIN RSA PRIVATE KEY-----
+        signing_key: |
+          -----BEGIN RSA PRIVATE KEY-----
           MIIEpAIBAAKCAQEAo7iwMcUTeOwWaMO3vLAYgKaY0zjjOVJXCtx6R8h2w04CXjJr
           tgl/gfEIhZj/p1TIbI7A7TGxQTD6Nary2o5oXWSaOFnJc2yX3r2z6rRCutGm5s5+
           zvQKUAFtqAQye1JV70BK+89z+zJu0dT+5cXTNJ0qwQKzSYhEwbmY7ECTcASfs02y
@@ -318,9 +319,8 @@ jobs:
           bPQmj3SX4XPJrvdGyM/8+x5RvMo/T7nOnvu27bVx1EkfoQgWb+t9axvjYtzeCg2Z
           fHUqFibKekjcLlmrikmd/1h7b562GWKmNo2qJyt6+jPRBy4PEyVRzQ==
           -----END RSA PRIVATE KEY-----
-
-'
-        verification_key: ! '-----BEGIN PUBLIC KEY-----
+        verification_key: |
+          -----BEGIN PUBLIC KEY-----
           MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo7iwMcUTeOwWaMO3vLAY
           gKaY0zjjOVJXCtx6R8h2w04CXjJrtgl/gfEIhZj/p1TIbI7A7TGxQTD6Nary2o5o
           XWSaOFnJc2yX3r2z6rRCutGm5s5+zvQKUAFtqAQye1JV70BK+89z+zJu0dT+5cXT
@@ -329,7 +329,6 @@ jobs:
           ZHJBW+v98vpbxjduDGfK1xg2YBY7JRM+BN8v7R0VXj/1QnXxTtKtIveiRo75jBYG
           HwIDAQAB
           -----END PUBLIC KEY-----
-'
       cc:
         client_secret: d831127235b7169b9a35
       admin:
@@ -401,7 +400,8 @@ jobs:
     domain: 192.168.56.8.xip.io
     saml_login:
       uaa_base: http://uaa.192.168.56.8.xip.io
-      serviceProviderKey: ! '-----BEGIN RSA PRIVATE KEY-----
+      serviceProviderKey: |
+        -----BEGIN RSA PRIVATE KEY-----
         MIIEpQIBAAKCAQEA1zRavRzimI2cBRHDeSWdIwRd3PelcMQ5BlAn9HxFgtnUzzIj
         7Kdu8yk9I1Qa/NsxWDQN1IUViHY7ODkOgX+2q5Zdq4ZbWKtr+RMAn+caBpbabdfw
         aCZpv2RQlnQtGLmejN/ElL8F2cIl2u6nWkX2hc6QLnKucii3xCEdA1HIkEXg+e/G
@@ -428,8 +428,8 @@ jobs:
         qnT7iyUjrKa61/D9PevHb77ZlNJz/tXyzGPuVZVFs+Ag/w4wiXkCDCTgVeeIbSDj
         4YuJ7Ty7ktsVDTPONFV0wrXgndtszxzNBEKt26U4oezzandT3FFWpJc=
         -----END RSA PRIVATE KEY-----
-'
-      serviceProviderCertificate: ! '-----BEGIN CERTIFICATE-----
+      serviceProviderCertificate: |
+        -----BEGIN CERTIFICATE-----
         MIIDDTCCAfWgAwIBAgIBADANBgkqhkiG9w0BAQUFADBKMQswCQYDVQQGEwJVUzEQ
         MA4GA1UECgwHUGl2b3RhbDEpMCcGA1UEAwwgc2VydmljZV9wcm92aWRlcl9rZXlf
         Y3JlZGVudGlhbHMwHhcNMTMwODA3MDEzNjE3WhcNMTUwODA3MDEzNjE3WjBKMQsw
@@ -448,7 +448,6 @@ jobs:
         A9HaGMaiKUs8RXvopD1OTAzcH1t5pFGiDEfZ6z+gFpzdHl5W8hlK3iHYBC+CY1ew
         nQFfJ2uamv+xeGh7QYeJdFw=
         -----END CERTIFICATE-----
-'
       idp_entity_alias: sso-sp
       idp_metadata_url: ! ''''''
     uaa:
