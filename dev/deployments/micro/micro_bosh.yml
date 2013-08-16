@@ -42,21 +42,21 @@ cloud:
     # VBoxManage command to issue VirtualBox commands.
     vcenters:
     - host: 192.168.56.1
-      user: work
-      password: work
+      user: <machine-username>
+      password: <machine-password>
 
       datacenters:
-      - name: xxx
+      - name: ignored-value
 
         # Location on the machine specified above.
-        # It will be used to store stemcells/artifacts 
-        # produced by BOSH. It must be readable/writable 
+        # It will be used to store stemcells/artifacts
+        # produced by BOSH. It must be readable/writable
         # by user provided above.
-        datastore_pattern: /Users/work/bosh_workstation_cpi
-        persistent_datastore_pattern: xxx
+        datastore_pattern: /Users/<machine-username>/bosh_workstation_cpi_cache
+        persistent_datastore_pattern: ignored-value
 
         clusters:
-        - xxx
+        - ignored-value
 
 logging:
   level: INFO
