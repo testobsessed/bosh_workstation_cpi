@@ -21,7 +21,7 @@ module BoshWorkstationCpi::Actions
 
     def delete_vm(vm)
       @logger.info("Deleting vm '#{vm.uuid}'")
-      vm.halt
+      vm.halt if vm.running?
       vm.delete
       @vm_manager.delete(vm.uuid)
     end
