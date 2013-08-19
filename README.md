@@ -29,6 +29,7 @@ Next, install [VirtualBox](https://www.virtualbox.org/wiki/Downloads), minimum v
 ### 2. Set Up the Network
 
 Set up a host-only VirtualBox network:
+
 1. Open VirtualBox
 1. Choose VirtualBox > Preferences > Network
 1. Create new network with DHCP disabled named `vboxnet0` (the default). Currently only this name works.
