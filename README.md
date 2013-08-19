@@ -7,22 +7,57 @@ This means you can create a BOSH release and test it, all on your local machine.
 
 ### 1. Install and Configure Virtual Box
 
-To use the BOSH workstation CPI you will need [VirtualBox version 4.2.16](https://www.virtualbox.org/wiki/Downloads) installed.
+To use the BOSH workstation CPI you will need Virtual Box 4.2.16 or later
+
+Before you install Virtual Box, you will need `mkisofs`. Check that you have it:
+
+```
+$ which mkisofs
+```
+
+If you don't have it, install `cdrtools` using your favorite package manager.
+For example if you are on MacOS:
+
+```
+$ brew install cdrtools
+```
+
+If you have difficulty installing on MacOS, you may need the Xcode command line tools installed.
+
+Next, install [VirtualBox, minimum version 4.2.16,](https://www.virtualbox.org/wiki/Downloads).
 
 You need to set up a host-only VirtualBox network:
   # Open VirtualBox
   # Choose VirtualBox > Preferences > Network
   # Create new network with DHCP disabled named `vboxnet0` (the default). Currently only this name works.
 
+Check that the vboxnet0 network is configured:
+
+```
+$ ifconfig
+
+_...other entries..._
+vboxnet0: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+	ether 0a:00:27:00:00:00
+	inet 192.168.56.1 netmask 0xffffff00 broadcast 192.168.56.255
+
+```
+
+Finally, make sure you can ping the IP address 192.168.56.1.
+
 ### 2. Install BOSH Gems
 
-Install `bosh_cli` and `bosh_cli_plugin_micro`
+Install `bosh_cli` and `bosh_cli_plugin_micro`.
+Note that these instructions rely on a version of these gems that have not yet been released, so you
+will need to specify
 
 ```
-$ gem install bosh_cli              -v 1.5.0.pre.883 --source https://s3.amazonaws.com/bosh-ci-pipeline/883/gems
-$ gem install bosh_cli_plugin_micro -v 1.5.0.pre.883 --source https://s3.amazonaws.com/bosh-ci-pipeline/883/gems
+$ gem install bosh_cli              -v 1.5.0.pre.908 --source https://s3.amazonaws.com/bosh-ci-pipeline/908/gems
+$ gem install bosh_cli_plugin_micro -v 1.5.0.pre.908 --source https://s3.amazonaws.com/bosh-ci-pipeline/908/gems
 ```
 Make sure you have the right version of bosh with `bosh -v`.
+
+
 
 ### 3. Build the bosh_workstation_cpi Gem
 
@@ -61,13 +96,14 @@ CD into the deployments directory. This directory includes example MicroBOSH and
 $ cd dev/deployments
 ```
 
-Edit `micro/micro_bosh.yml` to add the username and password for your machine.
+Edit `micro/micro_bosh.yml` to add the username and password for your machine in the `vcenters` section.
+Then point bosh to the micro deployment file:
 
 ```
 $ bosh micro deployment micro/
 ```
 
-Create the micro bosh with the stemcell you downloaded. This creates new VM in VirtualBox.
+Create the micro bosh with the stemcell you downloaded. This creates new VM in VirtualBox:
 
 ```
 $ bosh micro deploy _path_/micro-bosh-stemcell-latest-vsphere-esxi-ubuntu.tgz
@@ -89,7 +125,8 @@ $ bosh_workstation_cpi_inject 192.168.56.2 vcap c1oudc0w
 $ bosh_workstation_cpi_switch 192.168.56.2 vcap c1oudc0w
 ```
 
-Wait about 30 seconds, then make sure that your microbosh is configured correctly:
+Wait about 30 seconds, then make sure that your microbosh is configured correctly.
+When you run `bosh status` you should see that the CPI is set to workstation:
 
 ```
 $ bosh status
@@ -122,32 +159,79 @@ The stemcells required to make BOSH Workstation CPI work are not yet in the publ
 You can get them from the development build artifacts repository at https://s3.amazonaws.com/bosh-ci-pipeline/
 
 ```
-$ curl https://s3.amazonaws.com/bosh-ci-pipeline/897/bosh-stemcell/aws/bosh-stemcell-897-aws-xen-ubuntu.tgz -o bosh-stemcell-897-aws-xen-ubuntu.tgz
+$ curl https://s3.amazonaws.com/bosh-ci-pipeline/908/bosh-stemcell/vsphere/bosh-stemcell-908-vsphere-esxi-ubuntu.tgz -o bosh-stemcell-908-vsphere-esxi-ubuntu.tgz
 ```
 Once you have your stemcell you can upload it to your microbosh with the command:
 
 ```
-bosh upload stemcell _path_/bosh-stemcell-vsphere-750-5db4fe.tgz`
+bosh upload stemcell _path_/bosh-stemcell-908-vsphere-esxi-ubuntu.tgz
 ```
 
-The stemcell is referenced in the two sample manifests, nats.yml and cf.yml. Be sure to change the
+The stemcell is referenced in the two sample manifests in the `dev/deployments directory`, nats.yml and cf.yml.
+Be sure to change the
 stemcell name in these files to match your stemcell name.
 
 ### 2. Upload Your Release
 
-- `bosh upload release ~/workspace/releases/cf-133.1-dev.tgz`
-  - Referenced from `nats.yml` manifest
-  - If `bosh releases` does not show your release after uploading
-    wait for all `bosh tasks` to finish
+You can use a final release from the `cf-release` repo, or create your own release.
+To use an existing final release:
+
+```
+$ git clone https://github.com/cloudfoundry/cf-release
+$ git checkout deployed-to-prod
+$ bosh upload release releases/cf-137.yml
+```
+Verify that the release got uploaded with `bosh releases`:
+
+```
+$ bosh releases
+
++------+----------+-------------+
+| Name | Versions | Commit Hash |
++------+----------+-------------+
+| cf   | 137      | d35ed835+   |
++------+----------+-------------+
+(+) Uncommitted changes
+
+```
+
+If `bosh releases` does not show your release after uploading
+wait for all `bosh tasks` to finish.
 
 ### 3. Update Your Manifest
 
-- `bosh deployment dev/deployments/nats.yml && bosh deploy` (example single job NATS)
-  - Don't forget to change director_uuid
+There are two sample manifests included in this repo, both
+under the `dev/deployments` directory: `cf.yml` and `nats.yml`.
+You need to edit the manifest as follows.
 
-- `bosh deployment dev/deployments/cf.yml && bosh deploy` (example CF)
-  - Don't forget to change director_uuid
-  - Turn on `dev/local_dns_server.rb`
+First, change the director_uuid in your to match your director.
+Use `bosh status` to get the UUID setting for your director.
+Then edit your manifest to change the director_uuid setting.
+
+Next make sure that the release name referenced in your manifest matches
+the release name you uploaded to your director.
+So, for example, if `bosh releases`
+shows the release name as `cf`, make sure your cf.yml shows:
+
+```
+releases:
+- name: cf
+  version: latest
+```
+
+### 4. Deploy the Release
+
+You need to set the deployment with the `bosh deployment` command:
+
+```
+$ bosh deployment dev/deployments/cf.yml
+```
+
+Then deploy:
+
+```
+$ bosh deploy
+```
 
 
 ## Debugging
@@ -200,6 +284,9 @@ stemcell name in these files to match your stemcell name.
 - Run irb with access to Director gems:
   `sudo GEM_HOME=/var/vcap/packages/director/gem_home /var/vcap/packages/ruby/bin/irb`
 
+If you do not have the machine username and password configured correctly, you will may see an operation timed out error.
+
+If you specify a folder that you cannot write to in the micro_bosh.yml file, you'll see a mysterious fail.
 
 ### Thanks
 
