@@ -3,11 +3,11 @@
 The BOSH Workstation CPI allows you to do a BOSH deploy onto VirtualBox.
 This means you can create a BOSH release and test it, all on your local machine.
 
-## Installing
+## Prerequisites
 
 ### 1. Install and Configure Virtual Box
 
-To use the BOSH workstation CPI you will need Virtual Box 4.2.16 or later
+BOSH workstation CPI runs on Virtual Box.
 
 Before you install Virtual Box, you will need `mkisofs`. Check that you have it:
 
@@ -15,21 +15,23 @@ Before you install Virtual Box, you will need `mkisofs`. Check that you have it:
 $ which mkisofs
 ```
 
-If you don't have it, install `cdrtools` using your favorite package manager.
-For example if you are on MacOS:
+If you don't have `mkisofs`, install `cdrtools` using your favorite package manager.
+For example, on MacOS:
 
 ```
 $ brew install cdrtools
 ```
 
-If you have difficulty installing on MacOS, you may need the Xcode command line tools installed.
+If you encounter difficulty installing cdrtools on MacOS, you may need the Xcode command line tools installed.
 
-Next, install [VirtualBox, minimum version 4.2.16,](https://www.virtualbox.org/wiki/Downloads).
+Next, install [VirtualBox](https://www.virtualbox.org/wiki/Downloads), minimum version 4.2.16.
 
-You need to set up a host-only VirtualBox network:
-  # Open VirtualBox
-  # Choose VirtualBox > Preferences > Network
-  # Create new network with DHCP disabled named `vboxnet0` (the default). Currently only this name works.
+### 2. Set Up the Network
+
+Set up a host-only VirtualBox network:
+1. Open VirtualBox
+1. Choose VirtualBox > Preferences > Network
+1. Create new network with DHCP disabled named `vboxnet0` (the default). Currently only this name works.
 
 Check that the vboxnet0 network is configured:
 
@@ -45,21 +47,27 @@ vboxnet0: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
 
 Finally, make sure you can ping the IP address 192.168.56.1.
 
-### 2. Install BOSH Gems
+### 3. Install BOSH Gems
 
-Install `bosh_cli` and `bosh_cli_plugin_micro`.
-Note that these instructions rely on a version of these gems that have not yet been released, so you
-will need to specify
+You need both the `bosh_cli` and `bosh_cli_plugin_micro` gems.
+These instructions rely on a cersion 1.5.0.pre.908 or later of these gems.
+Because this version of these gems have not yet been released,
+you need to specify the version and gem source when installing. For example:
 
 ```
 $ gem install bosh_cli              -v 1.5.0.pre.908 --source https://s3.amazonaws.com/bosh-ci-pipeline/908/gems
 $ gem install bosh_cli_plugin_micro -v 1.5.0.pre.908 --source https://s3.amazonaws.com/bosh-ci-pipeline/908/gems
 ```
-Make sure you have the right version of bosh with `bosh -v`.
+Make sure you have the right version of bosh by running `bosh -v`.
 
+```
+$ bosh -v
+BOSH 1.5.0.pre.908
+```
 
+## Installation and Configuration
 
-### 3. Build the bosh_workstation_cpi Gem
+### 1. Build the bosh_workstation_cpi Gem
 
 Currently the bosh_workstation_cpi is not on rubygems. You need to build and install it.
 Clone this repository and cd into the directory. Then:
@@ -69,7 +77,7 @@ $ gem build bosh_workstation_cpi.gemspec
 $ gem install bosh_workstation_cpi*.gem
 ```
 
-### 4. Download the Stemcells
+### 2. Download the Stemcells
 
 You need a micro bosh stemcell.
 The stemcell required to make BOSH Workstation CPI work is not yet in the public BOSH blobstore.
@@ -82,7 +90,7 @@ $ curl https://s3.amazonaws.com/bosh-ci-pipeline/896/micro-bosh-stemcell/vsphere
 
 Note that because the s3 bucket is just a repository for build artifacts, the path may change.
 
-### 5. Set Up Your MicroBOSH
+### 3. Set Up Your MicroBOSH
 
 Prepare the MicroBOSH deployer plugin to work with workstation.
 
@@ -108,6 +116,8 @@ Create the micro bosh with the stemcell you downloaded. This creates new VM in V
 ```
 $ bosh micro deploy _path_/micro-bosh-stemcell-latest-vsphere-esxi-ubuntu.tgz
 ```
+
+### 4. Configure MicroBOSH
 
 Target your new microbosh and log in:
 
@@ -141,7 +151,7 @@ Director
   dns        enabled (domain_name: microbosh)
 ```
 
-### 6. Run the Local DNS Server
+### 5. Run the Local DNS Server
 
 ```
 $ sudo ruby dev/local_dns_server.rb
